@@ -1,20 +1,55 @@
+#!/bin/sh
+
+# This script initializes an AoC Cargo package with the following structure:
+#
+# |--Cargo.lock
+# |--Cargo.toml
+# |--src/
+# |  |--lib.rs
+# |--examples/
+# |  |--day1/
+# |     |--day1.rs
+# |     |--data/
+# |  |--day2/
+# |     |--day2.rs
+# |     |--data/
+# ................
+# |  |--day25/
+# |     |--day25.rs
+# |     |--data/
+#
+# Each day's solution will be placed into its own example.  Each example is a
+# multifile directory to allow for additional files that do not need to be
+# shared with other days.  Additionally, each example will have a data directory
+# to hold input files for the day.
+#
+# Shared code (usable across all days) can be pulled out into modules under
+# src/.  lib.rs, therefore exists purely to consolidate all modules into the
+# single library that this crate exports.
+
+# Parse the year
 echo "Year? "
 while read year; do
   if { test "$year" -ge 1000 && test "$year" -lt 10000; } 2> /dev/null; then
-    echo "Well done.\n"
     break
   else
-    echo "Please enter a valid 4 digit year.\n"
+    echo "Please enter a valid 4 digit year."
   fi
 done
 
-cargo new "aoc${year}"
-pushd "aoc${year}"
+project="aoc${year}"
 
-for i in {1..25}; do
-  touch "src/day${i}.rs"
+# Add this new project to the workspace Cargo.toml.
+sed -i "s/^]/  \"${project}\",\n]/g" Cargo.toml
+
+# Create and the new cargo project.  This sets up the core structure of the
+# crate, including the Cargo.lock file, Cargo.toml file, and src/lib.rs file.
+cargo new --lib "${project}"
+
+# Finally, we want to create the examples directory and the structure within.
+mkdir "${project}/examples"
+for i in $(seq 1 25); do
+  mkdir "${project}/examples/day${i}"
+  mkdir "${project}/examples/day${i}/data"
+  touch "${project}/examples/day${i}/main.rs"
 done
-
-rm src/main.rs
-
-mkdir lib
