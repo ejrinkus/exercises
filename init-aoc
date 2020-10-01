@@ -46,10 +46,37 @@ sed -i "s/^]/  \"${project}\",\n]/g" Cargo.toml
 # crate, including the Cargo.lock file, Cargo.toml file, and src/lib.rs file.
 cargo new --lib "${project}"
 
+# Add prompter as a standard dependency to the crate.
+echo 'prompter = { path = "../prompter" }' >> ${project}/Cargo.toml
+
 # Finally, we want to create the examples directory and the structure within.
-mkdir "${project}/examples"
+mkdir ${project}/examples
 for i in $(seq 1 25); do
-  mkdir "${project}/examples/day${i}"
-  mkdir "${project}/examples/day${i}/data"
-  touch "${project}/examples/day${i}/main.rs"
+  mkdir ${project}/examples/day${i}
+  touch ${project}/examples/day${i}/day.rs
+  touch ${project}/examples/day${i}/main.rs
+  touch ${project}/examples/day${i}/part1.txt
+  touch ${project}/examples/day${i}/part2.txt
+  cat << EOF > ${project}/examples/day${i}/main.rs
+use prompter;
+
+mod day;
+
+static PART_ONE_INPUT: &'static str = include_str!("part1.txt");
+static PART_TWO_INPUT: &'static str = include_str!("part2.txt");
+
+fn main() {
+    match prompter::prompter::<u8>("Which part? ") {
+      1 => {
+        println!("Part one results:");
+        println!("{}", day::part_one(PART_ONE_INPUT));
+      },
+      2 => {
+        println!("Part two results:");
+        println!("{}", day::part_two(PART_TWO_INPUT));
+      },
+      _ => println!("Invalid input."),
+    }
+}
+EOF
 done
