@@ -4,7 +4,7 @@ pub fn part_one(input: &str) -> i64 {
   pos - neg
 }
 
-pub fn part_two(input: &str) -> usize{
+pub fn part_two(input: &str) -> usize {
   let mut floor: i64 = 0;
   let mut count: usize = 1;
   for c in input.chars() {

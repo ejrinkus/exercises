@@ -57,6 +57,7 @@ for i in $(seq 1 25); do
   touch ${project}/examples/day${i}/main.rs
   touch ${project}/examples/day${i}/part1.txt
   touch ${project}/examples/day${i}/part2.txt
+  # main boilerplate.
   cat << EOF > ${project}/examples/day${i}/main.rs
 use prompter;
 
@@ -79,4 +80,35 @@ fn main() {
     }
 }
 EOF
+
+  # implementation and test skeleton
+  cat << EOF > ${project}/examples/day${i}/day.rs
+pub fn part_one(input: &str) -> i64 {
+  println!("{}", input);
+  0
+}
+
+pub fn part_two(input: &str) -> i64 {
+  println!("{}", input);
+  0
+}
+
+#[cfg(test)]
+mod dayN_tests {
+  use super::*;
+
+  #[test]
+  fn samples_part1() {
+    assert_eq!(part_one(""), 0);
+  }
+
+  #[test]
+  fn samples_part2() {
+    assert_eq!(part_two(""), 0);
+  }
+}
+EOF
+
+  # replace dayN in the skeleton with the correct day number
+  sed -i "s/dayN/day${i}/" ${project}/examples/day${i}/day.rs
 done
