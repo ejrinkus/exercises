@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 prompter = { path = "../prompter" }
+md5 = "0.7.0"
