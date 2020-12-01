@@ -2,4 +2,5 @@
 members = [
   "prompter",
   "aoc2015",
+  "aoc2020",
 ]
