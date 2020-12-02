@@ -14,7 +14,7 @@ pub fn part_one(input: &str) -> i64 {
 pub fn part_two(input: &str) -> i64 {
   for (i, l1) in input.lines().enumerate() {
     for (j, l2) in input.lines().enumerate().skip(i + 1) {
-      for (k, l3) in input.lines().enumerate().skip(j + 1) {
+      for (_k, l3) in input.lines().enumerate().skip(j + 1) {
         let first = l1.parse::<i64>().unwrap();
         let second = l2.parse::<i64>().unwrap();
         let third = l3.parse::<i64>().unwrap();
