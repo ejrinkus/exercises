@@ -149,7 +149,12 @@ impl Circuit {
       self.wires.insert(label.to_owned(), val);
     } else {
       if let Some(val) = self.wires.get(val_string) {
-        self.wires.insert(label.to_owned(), *val);
+        // We can't insert *val directly into wires since it's part of an
+        // immutable borrow of wires.  We instead clone its value, allowing us
+        // to drop the immutable borrow, so that we can then take a mutable
+        // borrow to insert it.
+        let cloned_val = *val;
+        self.wires.insert(label.to_owned(), cloned_val);
       } else {
         self
           .assignments
@@ -253,7 +258,12 @@ impl Circuit {
     let mut to_retry: Vec<(String, String)> = Vec::new();
     while let Some((left, right)) = self.assignments.pop() {
       if let Some(val) = self.wires.get(&left) {
-        self.wires.insert(right, *val);
+        // We can't insert *val directly into wires since it's part of an
+        // immutable borrow of wires.  We instead clone its value, allowing us
+        // to drop the immutable borrow, so that we can then take a mutable
+        // borrow to insert it.
+        let cloned_val = *val;
+        self.wires.insert(right, cloned_val);
       } else {
         to_retry.push((left, right));
       }
