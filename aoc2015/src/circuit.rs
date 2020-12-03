@@ -1,361 +1,272 @@
 use std::collections::HashMap;
 
-pub struct Circuit {
-  wires: HashMap<String, u16>,
+type WireType = u16;
+
+#[derive(Debug, PartialEq)]
+pub enum GateType {
+  Unknown,
+  And,
+  Or,
+  Not,
+  Lshift,
+  Rshift,
 }
 
-/// Implementation for the Circuit struct.  Gates (and input signals) are
-/// represented as methods.
+#[derive(Debug, PartialEq)]
+enum Operand {
+  Empty,
+  Label(String),
+  Value(WireType),
+}
+
+pub struct Gate {
+  gate_type: GateType,
+  l_operand: Operand,
+  r_operand: Operand,
+  out_wire: String,
+}
+
+impl Gate {
+  pub fn default() -> Gate {
+    Gate {
+      gate_type: GateType::Unknown,
+      l_operand: Operand::Empty,
+      r_operand: Operand::Empty,
+      out_wire: "".to_owned(),
+    }
+  }
+
+  pub fn new(gt: GateType, lw: Option<String>, rw: Option<String>, ow: String) -> Gate {
+    Gate {
+      gate_type: gt,
+      l_operand: lw.map_or(Operand::Empty, |v| Operand::Label(v)),
+      r_operand: rw.map_or(Operand::Empty, |v| Operand::Label(v)),
+      out_wire: ow,
+    }
+  }
+
+  pub fn resolve(&self) -> Result<WireType, String> {
+    return match &self.gate_type {
+      GateType::And => {
+        if let Operand::Value(left) = self.l_operand {
+          if let Operand::Value(right) = self.r_operand {
+            Ok(left & right)
+          } else {
+            Err("Right operand of AND gate is not resolved.".to_owned())
+          }
+        } else {
+          Err("Left operand of AND gate is not resolved.".to_owned())
+        }
+      }
+      GateType::Or => {
+        if let Operand::Value(left) = self.l_operand {
+          if let Operand::Value(right) = self.r_operand {
+            Ok(left | right)
+          } else {
+            Err("Right operand of OR gate is not resolved.".to_owned())
+          }
+        } else {
+          Err("Left operand of OR gate is not resolved.".to_owned())
+        }
+      }
+      GateType::Not => {
+        if let Operand::Value(right) = self.r_operand {
+          Ok(!right)
+        } else {
+          Err("Right operand of NOT gate is not resolved.".to_owned())
+        }
+      }
+      GateType::Lshift => {
+        if let Operand::Value(left) = self.l_operand {
+          if let Operand::Value(right) = self.r_operand {
+            Ok(left << right)
+          } else {
+            Err("Right operand of LSHIFT gate is not resolved.".to_owned())
+          }
+        } else {
+          Err("Left operand of LSHIFT gate is not resolved.".to_owned())
+        }
+      }
+      GateType::Rshift => {
+        if let Operand::Value(left) = self.l_operand {
+          if let Operand::Value(right) = self.r_operand {
+            Ok(left >> right)
+          } else {
+            Err("Right operand of RSHIFT gate is not resolved.".to_owned())
+          }
+        } else {
+          Err("Left operand of RSHIFT gate is not resolved.".to_owned())
+        }
+      }
+      GateType::Unknown => Err("Cannot resolve Unknown gate type".to_owned()),
+    };
+  }
+}
+
+pub struct Circuit {
+  // Map of all resolved wires, keyed by their label.
+  wires: HashMap<String, WireType>,
+  // List of all unresolved gates.
+  gates: Vec<Gate>,
+  // List of all unresolved wire assignments.
+  assignments: Vec<(String, String)>,
+}
+
+/// Implementation for the Circuit struct.
 impl Circuit {
-  /// Constructs a new circuit with no wires.
+  /// Constructs a new empty circuit.
   pub fn new() -> Circuit {
     Circuit {
       wires: HashMap::new(),
+      gates: Vec::new(),
+      assignments: Vec::new(),
     }
   }
 
-  /// Parses an instruction string and runs the instruction on this circuit.
-  ///
-  /// Every instruction should be placed on its own line.  Each instruction can
-  /// be one of the following:
-  ///
-  /// * (value) -> (wire) - Store (value) inside (wire).
-  /// * NOT (wire) -> (owire) - Store the bitwise compliment of the value in
-  /// (wire) in (owire).
-  /// * (lwire) AND (rwire) -> (owire) - Perform a bitwise AND on lwire and
-  /// rwire, and store the result in owire.
-  /// * (lwire) OR (rwire) -> (owire) - Perform a bitwise OR on lwire and
-  /// rwire, and store the result in owire.
-  /// * (wire) LSHIFT (dist) -> (owire) - Left shift the signal in (wire) by
-  /// (dist) places, and store the result in owire.
-  /// * (wire) RSHIFT (dist) -> (owire) - Right shift the signal in (wire) by
-  /// (dist) places, and store the result in owire.
-  ///
-  /// # Arguments
-  ///
-  /// * `instruction` - A string slice containing the instruction to run.
-  ///
-  /// # Returns
-  ///
-  /// An empty Result if the instruction was successful, or an Err otherwise.
-  ///
-  /// # Examples
-  ///
-  /// ```
-  /// use aoc2015::circuit::Circuit;
-  ///
-  /// let mut c = Circuit::new();
-  /// c.handle_instruction("123 -> x").unwrap();
-  /// c.handle_instruction("456 -> y").unwrap();
-  /// c.handle_instruction("x AND y -> d").unwrap();
-  /// c.handle_instruction("x OR y -> e").unwrap();
-  /// c.handle_instruction("x LSHIFT 2 -> f").unwrap();
-  /// c.handle_instruction("y RSHIFT 2 -> g").unwrap();
-  /// c.handle_instruction("NOT x -> h").unwrap();
-  /// c.handle_instruction("NOT y -> i").unwrap();
-  /// assert_eq!(c.get_wire("d"), Some(&72));
-  /// assert_eq!(c.get_wire("e"), Some(&507));
-  /// assert_eq!(c.get_wire("f"), Some(&492));
-  /// assert_eq!(c.get_wire("g"), Some(&114));
-  /// assert_eq!(c.get_wire("h"), Some(&65412));
-  /// assert_eq!(c.get_wire("i"), Some(&65079));
-  /// assert_eq!(c.get_wire("x"), Some(&123));
-  /// assert_eq!(c.get_wire("y"), Some(&456));
-  pub fn handle_instruction(&mut self, instruction: &str) -> Result<(), &'static str> {
-    let parts: Vec<&str> = instruction.split(" -> ").collect();
-    if parts.len() != 2 {
-      return Err("Instructions must contain exactly one '->' operator");
+  /// Figure out if an instruction is for a wire or gate, then add it to the circuit.
+  pub fn handle_instruction(&mut self, instruction: &str) -> Result<(), String> {
+    if instruction.contains("AND")
+      || instruction.contains("OR")
+      || instruction.contains("NOT")
+      || instruction.contains("LSHIFT")
+      || instruction.contains("RSHIFT")
+    {
+      self.add_gate(instruction)
+    } else {
+      self.add_wire(instruction)
     }
-    let expression = parts[0];
-    let owire = parts[1];
+  }
 
-    let parts: Vec<&str> = expression.split(' ').collect();
-
-    // This must be an input signal if there's only one piece after splitting
-    // the expression.
-    if parts.len() == 1 {
-      let signal = match parts[0].parse::<u16>() {
-        Ok(s) => s,
-        Err(_) => return Err("Input signal must be a valid 16-bit unsigned integer"),
-      };
-      self.input_signal(owire, signal);
-      return Ok(());
+  /// Add a wire to the circuit.
+  pub fn add_wire(&mut self, w: &str) -> Result<(), String> {
+    let mut sides = w.split(" -> ");
+    let val_string = sides.next().unwrap();
+    let label = sides.next().unwrap();
+    if self.wires.contains_key(label) {
+      return Err(format!("inserted duplicate wire: {}", label));
     }
-
-    // This must be a NOT gate if there's only two pieces.
-    if parts.len() == 2 {
-      if parts[0] != "NOT" {
-        return Err("Invalid instruction (did you mean NOT?)");
+    if let Ok(val) = val_string.parse::<WireType>() {
+      self.wires.insert(label.to_owned(), val);
+    } else {
+      if let Some(val) = self.wires.get(val_string) {
+        self.wires.insert(label.to_owned(), *val);
+      } else {
+        self
+          .assignments
+          .push((val_string.to_owned(), label.to_owned()));
       }
-      self.not(parts[1], owire).unwrap();
-      return Ok(());
+    }
+    Ok(())
+  }
+
+  /// Add a gate to the circuit.  Attempt to resolve it if possible, otherwise
+  /// it will be added to a list for later resolution.
+  pub fn add_gate(&mut self, g: &str) -> Result<(), String> {
+    let mut sides = g.split(" -> ");
+    let mut pieces = sides.next().unwrap().split(' ');
+    let mut gate = Gate::default();
+    gate.out_wire = sides.next().unwrap().to_owned();
+
+    let mut found_left = false;
+    while let Some(piece) = pieces.next() {
+      if piece == "NOT" {
+        found_left = true;
+        gate.l_operand = Operand::Empty;
+        gate.gate_type = GateType::Not;
+      } else if !found_left {
+        found_left = true;
+        if let Ok(val) = piece.parse::<WireType>() {
+          gate.l_operand = Operand::Value(val);
+        } else if self.wires.contains_key(piece) {
+          gate.l_operand = Operand::Value(*self.wires.get(piece).unwrap());
+        } else {
+          gate.l_operand = Operand::Label(piece.to_owned());
+        }
+      } else if piece == "AND" {
+        gate.gate_type = GateType::And;
+      } else if piece == "OR" {
+        gate.gate_type = GateType::Or;
+      } else if piece == "LSHIFT" {
+        gate.gate_type = GateType::Lshift;
+      } else if piece == "RSHIFT" {
+        gate.gate_type = GateType::Rshift;
+      } else {
+        if let Ok(val) = piece.parse::<WireType>() {
+          gate.r_operand = Operand::Value(val);
+        } else if self.wires.contains_key(piece) {
+          gate.r_operand = Operand::Value(*self.wires.get(piece).unwrap());
+        } else {
+          gate.r_operand = Operand::Label(piece.to_owned());
+        }
+      }
     }
 
-    // This could either be an AND, OR, LSHIFT, or RSHIFT gate.
-    if parts.len() == 3 {
-      match parts[1] {
-        "AND" => self.and(parts[0], parts[2], owire).unwrap(),
-        "OR" => self.or(parts[0], parts[2], owire).unwrap(),
-        "LSHIFT" => self
-          .lshift(parts[0], parts[2].parse::<usize>().unwrap(), owire)
-          .unwrap(),
-        "RSHIFT" => self
-          .rshift(parts[0], parts[2].parse::<usize>().unwrap(), owire)
-          .unwrap(),
-        _ => return Err("Invalid instruction (did you mean AND, OR, LSHIFT or RSHIFT?)"),
-      };
-      return Ok(());
+    if let Ok(val) = gate.resolve() {
+      self.wires.insert(gate.out_wire, val);
+    } else {
+      self.gates.push(gate);
     }
 
-    Err("Invalid instruction")
+    Ok(())
   }
 
-  /// Retrieve the value stored in the given wire.
-  ///
-  /// # Arguments
-  ///
-  /// * `wire` - A string slice key representing the wire to be retrieved.
-  ///
-  /// # Returns
-  ///
-  /// A reference to the stored 16-bit unsigned value in the wire, or None if
-  /// the wire doesn't exist.
-  ///
-  /// # Examples
-  ///
-  /// ```
-  /// use aoc2015::circuit::Circuit;
-  ///
-  /// let mut c = Circuit::new();
-  /// c.input_signal("a", 1);
-  /// assert_eq!(c.get_wire("a"), Some(&1));
-  /// c.input_signal("b", 2);
-  /// assert_eq!(c.get_wire("b"), Some(&2));
-  /// c.input_signal("a", 3);
-  /// assert_eq!(c.get_wire("a"), Some(&3));
-  /// assert_eq!(c.get_wire("c"), None);
-  /// ```
-  pub fn get_wire(&self, wire: &str) -> Option<&u16> {
-    self.wires.get(wire)
+  /// Attempt to resolve all unresolved gates.
+  pub fn resolve(&mut self) -> Result<(), String> {
+    loop {
+      let gates_before = self.gates.len();
+      let assignments_before = self.assignments.len();
+      self.resolve_gates();
+      self.resolve_assignments();
+
+      if self.gates.len() == 0 && self.assignments.len() == 0 {
+        return Ok(());
+      }
+      if gates_before == self.gates.len() && assignments_before == self.assignments.len() {
+        return Err("Could not resolve circuit.".to_owned());
+      }
+    }
   }
 
-  /// Sends the given signal to the given wire.  The wire will be added to the
-  /// circuit if it does not yet exist.
-  ///
-  /// # Arguments
-  ///
-  /// * `wire` - A string slice key representing the wire to send the signal to.
-  /// * `signal` - The 16-bit unsigned signal to send to the wire.
-  ///
-  /// # Returns
-  ///
-  /// If the wire already exists, then an Option with the old value is returned.
-  /// Otherwise, None is returned.
-  ///
-  /// # Examples
-  ///
-  /// ```
-  /// use aoc2015::circuit::Circuit;
-  ///
-  /// let mut c = Circuit::new();
-  /// assert_eq!(c.input_signal("a", 1), None);
-  /// assert_eq!(c.input_signal("b", 2), None);
-  /// assert_eq!(c.input_signal("a", 3), Some(1));
-  /// ```
-  pub fn input_signal(&mut self, wire: &str, signal: u16) -> Option<u16> {
-    self.wires.insert(String::from(wire), signal)
+  fn resolve_gates(&mut self) {
+    let mut to_retry: Vec<Gate> = Vec::new();
+    while let Some(mut gate) = self.gates.pop() {
+      if let Operand::Label(l) = &gate.l_operand {
+        if let Some(val) = self.wires.get(l) {
+          gate.l_operand = Operand::Value(*val);
+        }
+      }
+      if let Operand::Label(l) = &gate.r_operand {
+        if let Some(val) = self.wires.get(l) {
+          gate.r_operand = Operand::Value(*val);
+        }
+      }
+      if let Ok(val) = gate.resolve() {
+        self.wires.insert(gate.out_wire, val);
+      } else {
+        to_retry.push(gate);
+      }
+    }
+    self.gates = to_retry;
   }
 
-  /// Perform a bitwise AND on the signals stored in two wires, and send the
-  /// result to a third wire.  The third wire will be added to the circuit if it
-  /// does not yet exist.
-  ///
-  /// # Arguments
-  ///
-  /// * `lwire` - A string slice key representing the wire on the left side of
-  ///             the AND gate.
-  /// * `rwire` - A string slice key representing the wire on the right side of
-  ///             the AND gate.
-  ///
-  /// # Returns
-  ///
-  /// A Result containing the value produced by the gate, or an Err if either
-  /// input wire didn't exist.
-  ///
-  /// # Examples
-  ///
-  /// ```
-  /// use aoc2015::circuit::Circuit;
-  ///
-  /// let mut c = Circuit::new();
-  /// c.input_signal("a", 0b101);
-  /// c.input_signal("b", 0b110);
-  /// assert_eq!(c.and("a", "b", "c"), Ok(0b100));
-  /// assert_eq!(c.get_wire("c"), Some(&0b100));
-  /// assert!(c.and("foo", "bar", "c").is_err());
-  /// ```
-  pub fn and(&mut self, lwire: &str, rwire: &str, owire: &str) -> Result<u16, &'static str> {
-    let lsig = match self.wires.get(lwire) {
-      Some(s) => s,
-      None => return Err("left wire doesn't exist"),
-    };
-    let rsig = match self.wires.get(rwire) {
-      Some(s) => s,
-      None => return Err("right wire doesn't exist"),
-    };
-    let signal = lsig & rsig;
-    self.wires.insert(String::from(owire), signal);
-    Ok(signal)
+  fn resolve_assignments(&mut self) {
+    let mut to_retry: Vec<(String, String)> = Vec::new();
+    while let Some((left, right)) = self.assignments.pop() {
+      if let Some(val) = self.wires.get(&left) {
+        self.wires.insert(right, *val);
+      } else {
+        to_retry.push((left, right));
+      }
+    }
+    self.assignments = to_retry;
   }
 
-  /// Perform a bitwise OR on the signals stored in two wires, and send the
-  /// result to a third wire.  The third wire will be added to the circuit if it
-  /// does not yet exist.
-  ///
-  /// # Arguments
-  ///
-  /// * `lwire` - A string slice key representing the wire on the left side of
-  ///             the OR gate.
-  /// * `rwire` - A string slice key representing the wire on the right side of
-  ///             the OR gate.
-  ///
-  /// # Returns
-  ///
-  /// A Result containing the value produced by the gate, or an Err if either
-  /// input wire didn't exist.
-  ///
-  /// # Examples
-  ///
-  /// ```
-  /// use aoc2015::circuit::Circuit;
-  ///
-  /// let mut c = Circuit::new();
-  /// c.input_signal("a", 0b001);
-  /// c.input_signal("b", 0b010);
-  /// assert_eq!(c.or("a", "b", "c"), Ok(0b011));
-  /// assert_eq!(c.get_wire("c"), Some(&0b011));
-  /// assert!(c.or("foo", "bar", "c").is_err());
-  /// ```
-  pub fn or(&mut self, lwire: &str, rwire: &str, owire: &str) -> Result<u16, &'static str> {
-    let lsig = match self.wires.get(lwire) {
-      Some(s) => s,
-      None => return Err("left wire doesn't exist"),
-    };
-    let rsig = match self.wires.get(rwire) {
-      Some(s) => s,
-      None => return Err("right wire doesn't exist"),
-    };
-    let signal = lsig | rsig;
-    self.wires.insert(String::from(owire), signal);
-    Ok(signal)
-  }
-
-  /// Perform a bitwise OR on the signals stored in two wires, and send the
-  /// result to a third wire.  The third wire will be added to the circuit if it
-  /// does not yet exist.
-  ///
-  /// # Arguments
-  ///
-  /// * `lwire` - A string slice key representing the wire on the left side of
-  ///             the OR gate.
-  /// * `rwire` - A string slice key representing the wire on the right side of
-  ///             the OR gate.
-  ///
-  /// # Returns
-  ///
-  /// A Result containing the value produced by the gate, or an Err if either
-  /// input wire didn't exist.
-  ///
-  /// # Examples
-  ///
-  /// ```
-  /// use aoc2015::circuit::Circuit;
-  ///
-  /// let mut c = Circuit::new();
-  /// c.input_signal("a", 0b1010101010101010);
-  /// assert_eq!(c.not("a", "b"), Ok(0b0101010101010101));
-  /// assert_eq!(c.get_wire("b"), Some(&0b0101010101010101));
-  /// assert!(c.not("foo", "c").is_err());
-  /// ```
-  pub fn not(&mut self, wire: &str, owire: &str) -> Result<u16, &'static str> {
-    let sig = match self.wires.get(wire) {
-      Some(s) => s,
-      None => return Err("wire doesn't exist"),
-    };
-    let signal = sig ^ u16::MAX;
-    self.wires.insert(String::from(owire), signal);
-    Ok(signal)
-  }
-
-  /// Perform a binary left-shift on the signals stored in two wires, and send
-  /// the result to a third wire.  The third wire will be added to the circuit
-  /// if it does not yet exist.
-  ///
-  /// # Arguments
-  ///
-  /// * `wire` - A string slice key representing the wire on the left side of
-  ///            the LSHIFT gate.
-  /// * `dist` - A usize representing how far to shift the wire's signal.
-  ///
-  /// # Returns
-  ///
-  /// A Result containing the value produced by the gate, or an Err if either
-  /// input wire didn't exist.
-  ///
-  /// # Examples
-  ///
-  /// ```
-  /// use aoc2015::circuit::Circuit;
-  ///
-  /// let mut c = Circuit::new();
-  /// c.input_signal("a", 0b001);
-  /// assert_eq!(c.lshift("a", 2, "b"), Ok(0b100));
-  /// assert_eq!(c.get_wire("b"), Some(&0b100));
-  /// assert!(c.lshift("foo", 2, "c").is_err());
-  /// ```
-  pub fn lshift(&mut self, wire: &str, dist: usize, owire: &str) -> Result<u16, &'static str> {
-    let sig = match self.wires.get(wire) {
-      Some(s) => s,
-      None => return Err("wire doesn't exist"),
-    };
-    let signal = sig << dist;
-    self.wires.insert(String::from(owire), signal);
-    Ok(signal)
-  }
-
-  /// Perform a binary left-shift on the signals stored in two wires, and send
-  /// the result to a third wire.  The third wire will be added to the circuit
-  /// if it does not yet exist.
-  ///
-  /// # Arguments
-  ///
-  /// * `wire` - A string slice key representing the wire on the left side of
-  ///            the LSHIFT gate.
-  /// * `dist` - A usize representing how far to shift the wire's signal.
-  ///
-  /// # Returns
-  ///
-  /// A Result containing the value produced by the gate, or an Err if either
-  /// input wire didn't exist.
-  ///
-  /// # Examples
-  ///
-  /// ```
-  /// use aoc2015::circuit::Circuit;
-  ///
-  /// let mut c = Circuit::new();
-  /// c.input_signal("a", 0b100);
-  /// assert_eq!(c.rshift("a", 2, "b"), Ok(0b001));
-  /// assert_eq!(c.get_wire("b"), Some(&0b001));
-  /// assert!(c.lshift("foo", 2, "c").is_err());
-  /// ```
-  pub fn rshift(&mut self, wire: &str, dist: usize, owire: &str) -> Result<u16, &'static str> {
-    let sig = match self.wires.get(wire) {
-      Some(s) => s,
-      None => return Err("wire doesn't exist"),
-    };
-    let signal = sig >> dist;
-    self.wires.insert(String::from(owire), signal);
-    Ok(signal)
+  /// Attempt to get the value of a given wire label from the circuit.
+  pub fn get_wire(&self, label: &str) -> Option<WireType> {
+    if let Some(val) = self.wires.get(label) {
+      Some(*val)
+    } else {
+      None
+    }
   }
 }

@@ -7,12 +7,15 @@ pub fn part_one(input: &str) -> i64 {
   for line in input.lines() {
     c.handle_instruction(line).unwrap();
   }
-  *c.get_wire("a").unwrap() as i64
+  if let Err(err) = c.resolve() {
+    panic!(err);
+  }
+  c.get_wire("a").unwrap() as i64
 }
 
 pub fn part_two(input: &str) -> i64 {
-  println!("{}", input);
-  0
+  // Same solution, different input.
+  part_one(input)
 }
 
 #[cfg(test)]
@@ -21,37 +24,38 @@ mod day7_tests {
 
   #[test]
   fn samples_part1() {
-    let input = "123 -> x\n\
-    456 -> y\n\
-    x AND y -> a";
+    let input = "123 -> x
+456 -> y
+x AND y -> a";
     assert_eq!(part_one(input), 72);
+    println!("success");
 
-    let input = "123 -> x\n\
-    456 -> y\n\
-    x OR y -> a";
+    let input = "123 -> x
+456 -> y
+x OR y -> a";
     assert_eq!(part_one(input), 507);
+    println!("success");
 
-    let input = "123 -> x\n\
-    456 -> y\n\
-    x LSHIFT 2 -> a";
+    let input = "123 -> x
+456 -> y
+x LSHIFT 2 -> a";
     assert_eq!(part_one(input), 492);
+    println!("success");
 
-    let input = "123 -> x\n\
-    456 -> y\n\
-    y RSHIFT 2 -> a";
+    let input = "123 -> x
+456 -> y
+y RSHIFT 2 -> a";
     assert_eq!(part_one(input), 114);
+    println!("success");
 
-    let input = "123 -> x\n\
-    NOT x -> a";
+    let input = "123 -> x
+NOT x -> a";
     assert_eq!(part_one(input), 65412);
+    println!("success");
 
-    let input = "456 -> y\n\
-    NOT y -> a";
+    let input = "456 -> y
+NOT y -> a";
     assert_eq!(part_one(input), 65079);
-  }
-
-  #[test]
-  fn samples_part2() {
-    assert_eq!(part_two(""), 0);
+    println!("success");
   }
 }
