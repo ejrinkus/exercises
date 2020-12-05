@@ -1,27 +1,14 @@
 pub fn get_seat(input: &str) -> (u32, u32, u32) {
-  if input.len() != 10 {
-    panic!("bad seat assignment {}", input);
-  }
-  let mut row_range = (0, 127);
-  let mut col_range = (0, 7);
+  let mut row = 127;
+  let mut col = 7;
   for (i, c) in input.chars().enumerate() {
-    if i < 7 {
-      if c == 'B' {
-        row_range.0 += 2_u32.pow(6 - i as u32);
-      } else if c == 'F' {
-        row_range.1 -= 2_u32.pow(6 - i as u32);
-      } else {
-        panic!("bad seat assignment {}", input);
-      }
-    } else if c == 'R' {
-      col_range.0 += 2_u32.pow(9 - i as u32);
-    } else if c == 'L' {
-      col_range.1 -= 2_u32.pow(9 - i as u32);
-    } else {
-      panic!("bad seat assignment {}", input);
+    if i < 7 && c == 'F' {
+      row -= 2_u32.pow(6 - i as u32);
+    } else if i >= 7 && c == 'L' {
+      col -= 2_u32.pow(9 - i as u32);
     }
   }
-  (row_range.0, col_range.0, row_range.0 * 8 + col_range.0)
+  (row, col, row * 8 + col)
 }
 
 pub fn part_one(input: &str) -> i64 {
