@@ -1,6 +1,6 @@
 pub fn part_one(input: &str) -> i64 {
   for (i, l1) in input.lines().enumerate() {
-    for (j, l2) in input.lines().enumerate().skip(i + 1) {
+    for (_j, l2) in input.lines().enumerate().skip(i + 1) {
       let first = l1.parse::<i64>().unwrap();
       let second = l2.parse::<i64>().unwrap();
       if first + second == 2020 {
