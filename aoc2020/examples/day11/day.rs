@@ -8,7 +8,6 @@ enum State {
 struct SeatMap {
   seats: Vec<State>,
   width: usize,
-  height: usize,
 }
 
 impl SeatMap {
@@ -17,12 +16,10 @@ impl SeatMap {
       SeatMap {
         seats: Vec::new(),
         width: 0,
-        height: 0,
       }
     } else {
       let mut seat_map: Vec<State> = Vec::new();
       let width = input.find('\n').unwrap();
-      let mut height = 0;
       for l in input.lines() {
         for c in l.chars() {
           match c {
@@ -32,12 +29,10 @@ impl SeatMap {
             _ => (),
           }
         }
-        height += 1;
       }
       SeatMap {
         seats: seat_map,
         width: width,
-        height: height,
       }
     }
   }
