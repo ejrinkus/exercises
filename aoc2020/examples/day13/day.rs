@@ -51,7 +51,6 @@ pub fn part_two(input: &str) -> u64 {
   for (o, id) in enumerated_ids {
     timestamp = find_ts(o, id, timestamp, prev_lcm);
     prev_lcm *= id;
-    println!("up to id {}, offset {}, solution is {}", id, o, timestamp);
   }
   timestamp
 }
