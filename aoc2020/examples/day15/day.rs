@@ -37,7 +37,7 @@ pub fn part_two(input: &str) -> u64 {
     // Using the entry API, the whole thing takes about ~18 seconds.  The
     // original solution that's still being used in part 1, however, takes
     // ~44 seconds if used for this part.
-    let entry = num_turns
+    num_turns
       .entry(last_num)
       .and_modify(|e| {
         last_num = i as u64 - *e;
