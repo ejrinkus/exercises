@@ -33,7 +33,6 @@ pub fn part_two(input: &str) -> u64 {
   for (i, n) in nums.iter().enumerate() {
     num_turns.insert(*n, i as u64 + 1);
   }
-  let start = Instant::now();
   for i in (nums.len() + 1)..30000000 {
     // Using the entry API, the whole thing takes about ~18 seconds.  The
     // original solution that's still being used in part 1, however, takes
