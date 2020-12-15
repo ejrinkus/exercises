@@ -23,7 +23,6 @@ pub fn part_one(input: &str) -> u64 {
   last_num
 }
 
-// It runs in 43 seconds.  Good enough for me :P
 pub fn part_two(input: &str) -> u64 {
   let mut nums: Vec<u64> = input
     .split(',')
@@ -34,15 +33,21 @@ pub fn part_two(input: &str) -> u64 {
   for (i, n) in nums.iter().enumerate() {
     num_turns.insert(*n, i as u64 + 1);
   }
+  let start = Instant::now();
   for i in (nums.len() + 1)..30000000 {
-    if num_turns.contains_key(&last_num) {
-      let turn = *num_turns.get(&last_num).unwrap();
-      num_turns.insert(last_num, i as u64);
-      last_num = i as u64 - turn;
-    } else {
-      num_turns.insert(last_num, i as u64);
-      last_num = 0;
-    }
+    // Using the entry API, the whole thing takes about ~18 seconds.  The
+    // original solution that's still being used in part 1, however, takes
+    // ~44 seconds if used for this part.
+    let entry = num_turns
+      .entry(last_num)
+      .and_modify(|e| {
+        last_num = i as u64 - *e;
+        *e = i as u64
+      })
+      .or_insert_with(|| {
+        last_num = 0;
+        i as u64
+      });
   }
   last_num
 }
