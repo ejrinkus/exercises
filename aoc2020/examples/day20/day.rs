@@ -1,26 +1,22 @@
 use itertools::join;
 use std::collections::HashMap;
 
-// pub struct Tile {
-//   id: u64,
-//   contents: String,
-//   top: u16,
-//   top_flipped: u16,
-//   bottom: u16,
-//   bottom_flipped: u16,
-//   left: u16,
-//   left_flipped: u16,
-//   right: u16,
-//   right_flipped: u16,
-// }
+#[derive(Clone, Debug)]
+pub struct Tile {
+  id: u64,
+  contents: String,
+  // Order: left, right, top, bottom,
+  //        left_flipped, right_flipped, top_flipped, bottom_flipped.
+  edges: [u16; 8],
+}
 
 // A tile's border can be easily converted to a 10 bit number.  A BoT maps these
 // border-values with the IDs that have them.
-type BtoT = HashMap<u16, Vec<u64>>;
+type BtoT = HashMap<u16, Vec<Tile>>;
 
 // Order of output doesn't matter since the tiles might be rotated.  The left
 // and right borders are computed top-down.
-pub fn parse_tile(tile_str: &str) -> [u16; 8] {
+pub fn parse_tile(tile_str: &str) -> Tile {
   let width = tile_str.find('\n').unwrap();
   if width != 10 {
     panic!("unexpected line length: {}", width);
@@ -51,16 +47,20 @@ pub fn parse_tile(tile_str: &str) -> [u16; 8] {
     .enumerate()
     .map(|(i, c)| if c == '#' { 1 << (width - i - 1) } else { 0 })
     .sum();
-  [
-    left,
-    binary_flip(left),
-    right,
-    binary_flip(right),
-    top,
-    binary_flip(top),
-    bottom,
-    binary_flip(bottom),
-  ]
+  Tile {
+    id: 0,
+    contents: tile_str.to_owned(),
+    edges: [
+      left,
+      right,
+      top,
+      bottom,
+      binary_flip(left),
+      binary_flip(right),
+      binary_flip(top),
+      binary_flip(bottom),
+    ],
+  }
 }
 
 pub fn binary_flip(mut num: u16) -> u16 {
@@ -80,8 +80,8 @@ pub fn binary_flip(mut num: u16) -> u16 {
 // no two of these 8 values will ever be the same.
 pub fn parse_input(input: &str) -> BtoT {
   let mut ret = BtoT::new();
-  for tile in input.split("\n\n") {
-    let mut lines = tile.lines();
+  for tile_str in input.split("\n\n") {
+    let mut lines = tile_str.lines();
     let id = lines
       .next()
       .unwrap()
@@ -92,8 +92,10 @@ pub fn parse_input(input: &str) -> BtoT {
       .parse::<u64>()
       .unwrap();
     let tile_body = join(lines, "\n");
-    for border in parse_tile(&tile_body).iter() {
-      ret.entry(*border).or_insert(Vec::new()).push(id);
+    let mut tile = parse_tile(&tile_body);
+    tile.id = id;
+    for border in tile.edges.iter() {
+      ret.entry(*border).or_insert(Vec::new()).push(tile.clone());
     }
   }
   ret
@@ -105,11 +107,11 @@ pub fn part_one(input: &str) -> u64 {
   // be used by two tiles (that are adjacent on that border), we just need to
   // find the 4 tiles that only pair with 2 other tiles.
   let mut per_tile_matches: HashMap<u64, usize> = HashMap::new();
-  for (_border, ids) in btot {
-    if ids.len() == 2 {
+  for (_border, tiles) in btot {
+    if tiles.len() == 2 {
       // This is a matching border, update each ID's count.
-      for id in ids {
-        *per_tile_matches.entry(id).or_insert(0) += 1;
+      for tile in tiles {
+        *per_tile_matches.entry(tile.id).or_insert(0) += 1;
       }
     }
   }
@@ -120,7 +122,6 @@ pub fn part_one(input: &str) -> u64 {
   // middle tiles a count of 8.
   for (id, count) in per_tile_matches {
     if count == 4 {
-      corner_count += 1;
       product *= id;
     }
   }
