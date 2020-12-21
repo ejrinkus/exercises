@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 type AllsToIngs = HashMap<String, HashSet<String>>;
 type IngsToAlls = HashMap<String, HashSet<String>>;
+type IngCounts = HashMap<String, usize>;
 
 pub fn intersect(a: &HashSet<String>, b: &HashSet<String>) -> HashSet<String> {
   let mut out: HashSet<String> = HashSet::new();
@@ -40,23 +41,16 @@ pub fn parse_line(line: &str) -> (HashSet<String>, HashSet<String>) {
   (ings, alls)
 }
 
-pub fn parse_ingredients(input: &str) -> (IngsToAlls, AllsToIngs) {
-  let mut ings_to_alls: IngsToAlls = IngsToAlls::new();
+pub fn parse_ingredients(input: &str) -> (IngsToAlls, AllsToIngs, IngCounts) {
   let mut alls_to_ings: AllsToIngs = AllsToIngs::new();
+  let mut ings_to_alls: IngsToAlls = IngsToAlls::new();
+  let mut ing_counts: IngCounts = IngCounts::new();
   for line in input.lines() {
-    let (mut ings_line, mut alls_line) = parse_line(line);
-    // Map ingredients to possible allergens.  If there's already a set of possible
-    // allergens for an ingredient, then intersect those sets.
-    for i in &ings_line {
-      let e = ings_to_alls.entry(i.clone()).or_insert(HashSet::new());
-      if e.is_empty() {
-        *e = alls_line.clone();
-      } else {
-        *e = intersect(e, &alls_line);
-      }
-    }
-    // Same as above, but for allergens to ingredients.  Note that a complete solution
-    // would result in only one ingredient in each of these mappings.
+    let (ings_line, alls_line) = parse_line(line);
+    // Each allergen on the line is contained within exactly one ingredient on
+    // the line.  Since each allergen can only be found in exactly one
+    // ingredient, we want to keep intersecting these sets to narrow down the
+    // possibilities.
     for a in &alls_line {
       let e = alls_to_ings.entry(a.clone()).or_insert(HashSet::new());
       if e.is_empty() {
@@ -65,20 +59,37 @@ pub fn parse_ingredients(input: &str) -> (IngsToAlls, AllsToIngs) {
         *e = intersect(e, &ings_line);
       }
     }
+    // Keep track of every ingredient we've found so far
+    for ing in &ings_line {
+      ings_to_alls.entry((*ing).clone()).or_insert(HashSet::new());
+      let count = ing_counts.entry((*ing).clone()).or_insert(0);
+      *count += 1;
+    }
   }
-  (ings_to_alls, alls_to_ings)
+  // Once we've built alls_to_ings, we want to flip it to have the reverse
+  // mapping.  Since an ingredient can contain multiple allergens, and because
+  // all allergens don't always appear on a line, we can't use the same
+  // iterative intersection approach that we used with alls_to_ings, so we do it
+  // here.
+  for (a, ings) in &alls_to_ings {
+    for ing in ings {
+      ings_to_alls
+        .entry((*ing).clone())
+        .or_insert(HashSet::new())
+        .insert(a.clone());
+    }
+  }
+  (ings_to_alls, alls_to_ings, ing_counts)
 }
 
 pub fn part_one(input: &str) -> usize {
-  let (ings_to_alls, alls_to_ings) = parse_ingredients(input);
-  println!("ings_to_alls: {:?}", ings_to_alls);
-  println!("alls_to_ings: {:?}", alls_to_ings);
+  let (ings_to_alls, _alls_to_ings, ing_counts) = parse_ingredients(input);
   let mut sum = 0;
   for (ing, alls) in ings_to_alls {
     if alls.len() != 0 {
       continue;
     }
-    sum += input.match_indices(&ing).count();
+    sum += ing_counts.get(&ing).unwrap();
   }
   sum
 }
@@ -94,7 +105,16 @@ mod day21_tests {
 
   #[test]
   fn samples_part1() {
-    assert_eq!(part_one(""), 0);
+    assert_eq!(
+      part_one(
+        "mxmnhmsxvkd kfcds sqjhc nhms (contains dairy, fish)
+trh fvjkl sbzzf mxmnhmsxvkd (contains dairy)
+sqjhc fvjkl (contains soy)
+sqjhc fvjkl mxmnhmsxvkd (contains soy)
+sqjhc mxmnhmsxvkd sbzzf (contains fish)"
+      ),
+      5
+    );
   }
 
   #[test]
