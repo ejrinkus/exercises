@@ -1,5 +1,7 @@
 use itertools::join;
+use num::traits::PrimInt;
 use std::collections::HashMap;
+use std::str::FromStr;
 
 #[derive(Clone, Debug)]
 pub struct Tile {
@@ -7,70 +9,158 @@ pub struct Tile {
   contents: String,
   // Order: left, right, top, bottom,
   //        left_flipped, right_flipped, top_flipped, bottom_flipped.
-  edges: [u16; 8],
+  edges: [u128; 8],
+  width: usize,
+  height: usize,
+}
+
+impl FromStr for Tile {
+  type Err = std::string::ParseError;
+
+  fn from_str(tile_str: &str) -> Result<Self, Self::Err> {
+    let width = tile_str.find('\n').unwrap();
+    let height = tile_str.lines().count();
+    if width != 10 {
+      panic!("unexpected line length: {}", width);
+    }
+    let top: u128 = tile_str
+      .lines()
+      .next()
+      .unwrap()
+      .char_indices()
+      .map(|(i, c)| if c == '#' { 1 << (width - i - 1) } else { 0 })
+      .sum();
+    let bottom: u128 = tile_str
+      .lines()
+      .last()
+      .unwrap()
+      .char_indices()
+      .map(|(i, c)| if c == '#' { 1 << (width - i - 1) } else { 0 })
+      .sum();
+    let left: u128 = tile_str
+      .lines()
+      .map(|l| l.chars().next().unwrap())
+      .enumerate()
+      .map(|(i, c)| if c == '#' { 1 << (width - i - 1) } else { 0 })
+      .sum();
+    let right: u128 = tile_str
+      .lines()
+      .map(|l| l.chars().last().unwrap())
+      .enumerate()
+      .map(|(i, c)| if c == '#' { 1 << (width - i - 1) } else { 0 })
+      .sum();
+    Ok(Tile {
+      id: 0,
+      contents: tile_str.to_owned(),
+      edges: [
+        left,
+        right,
+        top,
+        bottom,
+        binary_flip(left, height),
+        binary_flip(right, height),
+        binary_flip(top, width),
+        binary_flip(bottom, width),
+      ],
+      width,
+      height,
+    })
+  }
+}
+
+impl Tile {
+  // Flip the tile vertically in place (along the horizontal axis).
+  pub fn flip_v(&mut self) {
+    self.contents = join(self.contents.lines().rev(), "\n");
+    self.edges = [self.edges[4],
+                  self.edges[5],
+                  self.edges[2],
+                  self.edges[3],
+                  self.edges[0],
+                  self.edges[1],
+                  self.edges[6],
+                  self.edges[7]];
+  }
+  // Flip the tile horizontally in place (along the vertical axis).
+  pub fn flip_x(&mut self) {
+    self.contents = join(self.contents.lines().rev(), "\n");
+    self.edges = [self.edges[0],
+                  self.edges[1],
+                  self.edges[6],
+                  self.edges[7],
+                  self.edges[4],
+                  self.edges[5],
+                  self.edges[2],
+                  self.edges[3]];
+  }
+  // Rotate the tile 90 degrees clockwise in place.
+  pub fn rot_right(&mut self) {
+    let mut new_contents = String::new();
+    for i in 0..self.height {
+      let new_row: String = self.contents.lines().fold(String::new(), |mut acc, s| {
+        acc.push(s.chars().skip(i).next().unwrap());
+        acc
+      }).chars().rev().collect();
+      new_contents.push('\n');
+      new_contents.push_str(&new_row);
+    }
+    self.contents = new_contents;
+    let temp = self.height;
+    self.height = self.width;
+    self.width = temp;
+    self.edges = [self.edges[3],  // Bottom moves to left
+                  self.edges[2],  // Top moves to right
+                  self.edges[4],  // Left (flipped) moves to top
+                  self.edges[5],  // Right (flipped) moves to bottom 
+                  self.edges[7],  // Bottom (flipped) moves to left (flipped)
+                  self.edges[6],  // Top (flipped) moves to right (flipped)
+                  self.edges[0],  // Left moves to top (flipped)
+                  self.edges[1]]  // Right moves to bottom (flipped)
+  }
+  // Rotate the tile 90 degrees counterclockwise in place.
+  pub fn rot_left(&mut self) {
+    let mut new_contents = String::new();
+    for i in 0..self.height {
+      let new_row: String = self.contents.lines().fold(String::new(), |mut acc, s| {
+        acc.push(s.chars().skip(self.height - i - 1).next().unwrap());
+        acc
+      }).chars().collect();
+      new_contents.push('\n');
+      new_contents.push_str(&new_row);
+    }
+    self.contents = new_contents;
+  }
+  // Rotate the tile 180 degrees in place.
+  pub fn rot_180(&mut self) {}
+  // Attempt to stitch |tile| to this tile.  |border| is the matching border value
+  // between the two tiles.  Takes ownership of |tile|.
+  pub fn stitch(&mut self, tile: Tile, border: u128) {
+    let side = self.edges.iter().enumerate().find(|(_, v)| **v == border).unwrap().0;
+  }
 }
 
 // A tile's border can be easily converted to a 10 bit number.  A BoT maps these
 // border-values with the IDs that have them.
-type BtoT = HashMap<u16, Vec<Tile>>;
+type BtoT = HashMap<u128, Vec<Tile>>;
 
-// Order of output doesn't matter since the tiles might be rotated.  The left
-// and right borders are computed top-down.
-pub fn parse_tile(tile_str: &str) -> Tile {
-  let width = tile_str.find('\n').unwrap();
-  if width != 10 {
-    panic!("unexpected line length: {}", width);
-  }
-  let top: u16 = tile_str
-    .lines()
-    .next()
-    .unwrap()
-    .char_indices()
-    .map(|(i, c)| if c == '#' { 1 << (width - i - 1) } else { 0 })
-    .sum();
-  let bottom: u16 = tile_str
-    .lines()
-    .last()
-    .unwrap()
-    .char_indices()
-    .map(|(i, c)| if c == '#' { 1 << (width - i - 1) } else { 0 })
-    .sum();
-  let left: u16 = tile_str
-    .lines()
-    .map(|l| l.chars().next().unwrap())
-    .enumerate()
-    .map(|(i, c)| if c == '#' { 1 << (width - i - 1) } else { 0 })
-    .sum();
-  let right: u16 = tile_str
-    .lines()
-    .map(|l| l.chars().last().unwrap())
-    .enumerate()
-    .map(|(i, c)| if c == '#' { 1 << (width - i - 1) } else { 0 })
-    .sum();
-  Tile {
-    id: 0,
-    contents: tile_str.to_owned(),
-    edges: [
-      left,
-      right,
-      top,
-      bottom,
-      binary_flip(left),
-      binary_flip(right),
-      binary_flip(top),
-      binary_flip(bottom),
-    ],
-  }
-}
-
-pub fn binary_flip(mut num: u16) -> u16 {
-  let mut ret = 0;
+// Takes an unsigned integer |num| with |len| bits and reverses the bits.  Note that
+// |len| does not correspond to capacity of |num| in bits.  E.g. |num| may be a u16,
+// but if |len| is 10 then we only treat it as a 10-bit number.
+pub fn binary_flip<'a, B>(mut num: B, mut len: usize) -> B
+where
+  B: PrimInt,
+{
+  let mut ret: B = B::zero();
   // We're dealing with 10-bit numbers, even though they're stored in u16.
-  for _ in 0..10 {
-    ret <<= 1;
-    ret |= num & 1;
-    num >>= 1;
+  // For part 2 I need to start stitching together tiles, so
+  // they may have borders longer than 10.
+  while num > B::zero() {
+    ret = ret.unsigned_shl(1);
+    ret = ret | (num & B::one());
+    num = num.unsigned_shr(1);
+    len = len - 1;
   }
+  ret = ret.unsigned_shl(len as u32);
   ret
 }
 
@@ -92,7 +182,7 @@ pub fn parse_input(input: &str) -> BtoT {
       .parse::<u64>()
       .unwrap();
     let tile_body = join(lines, "\n");
-    let mut tile = parse_tile(&tile_body);
+    let mut tile = tile_body.parse::<Tile>().unwrap();
     tile.id = id;
     for border in tile.edges.iter() {
       ret.entry(*border).or_insert(Vec::new()).push(tile.clone());
