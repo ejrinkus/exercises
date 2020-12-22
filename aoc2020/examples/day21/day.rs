@@ -1,18 +1,9 @@
-use std::collections::{HashMap, HashSet};
+use itertools::join;
+use std::collections::{HashMap, HashSet, VecDeque};
 
 type AllsToIngs = HashMap<String, HashSet<String>>;
 type IngsToAlls = HashMap<String, HashSet<String>>;
 type IngCounts = HashMap<String, usize>;
-
-pub fn intersect(a: &HashSet<String>, b: &HashSet<String>) -> HashSet<String> {
-  let mut out: HashSet<String> = HashSet::new();
-  for s in a {
-    if b.contains(s) {
-      out.insert(s.to_string());
-    }
-  }
-  out
-}
 
 pub fn parse_line(line: &str) -> (HashSet<String>, HashSet<String>) {
   let mut ings: HashSet<String> = HashSet::new();
@@ -56,7 +47,7 @@ pub fn parse_ingredients(input: &str) -> (IngsToAlls, AllsToIngs, IngCounts) {
       if e.is_empty() {
         *e = ings_line.clone();
       } else {
-        *e = intersect(e, &ings_line);
+        *e = e.intersection(&ings_line).cloned().collect();
       }
     }
     // Keep track of every ingredient we've found so far
@@ -67,10 +58,11 @@ pub fn parse_ingredients(input: &str) -> (IngsToAlls, AllsToIngs, IngCounts) {
     }
   }
   // Once we've built alls_to_ings, we want to flip it to have the reverse
-  // mapping.  Since an ingredient can contain multiple allergens, and because
-  // all allergens don't always appear on a line, we can't use the same
-  // iterative intersection approach that we used with alls_to_ings, so we do it
-  // here.
+  // mapping.  If an allergen is on a line, its ingredient will always be
+  // present on that line as well.  However, the reverse isn't necessarily true.
+  // As a result, we rely on the allergens -> ingredients mapping as a source of
+  // truth (trying to build the reverse mapping iteratively above would end up
+  // being inaccurate).
   for (a, ings) in &alls_to_ings {
     for ing in ings {
       ings_to_alls
@@ -94,9 +86,38 @@ pub fn part_one(input: &str) -> usize {
   sum
 }
 
-pub fn part_two(input: &str) -> i64 {
-  println!("{}", input);
-  0
+pub fn reduce(alls_to_ings: AllsToIngs) -> Vec<(String, String)> {
+  let mut out: Vec<(String, String)> = Vec::new();
+  let mut resolved_ings: HashSet<String> = HashSet::new();
+  let mut deque: VecDeque<(String, HashSet<String>)> = alls_to_ings
+    .iter()
+    .map(|(k, v)| (k.clone(), v.clone()))
+    .collect();
+
+  while let Some((a, ings)) = deque.pop_front() {
+    if ings.len() == 1 {
+      let ing = ings.iter().next().unwrap();
+      resolved_ings.insert(ing.to_string());
+      out.push((a, ing.to_string()));
+      continue;
+    }
+    let mut new_ings: HashSet<String> = HashSet::new();
+    ings
+      .iter()
+      .filter(|ing| !resolved_ings.contains(&ing.to_string()))
+      .for_each(|ing| {
+        new_ings.insert(ing.to_string());
+      });
+    deque.push_back((a, new_ings));
+  }
+  out
+}
+
+pub fn part_two(input: &str) -> String {
+  let (_ings_to_alls, alls_to_ings, _ing_counts) = parse_ingredients(input);
+  let mut mappings = reduce(alls_to_ings);
+  mappings.sort_by(|a, b| a.0.cmp(&b.0));
+  join(mappings.iter().map(|(_, ing)| ing), ",")
 }
 
 #[cfg(test)]
@@ -119,6 +140,15 @@ sqjhc mxmnhmsxvkd sbzzf (contains fish)"
 
   #[test]
   fn samples_part2() {
-    assert_eq!(part_two(""), 0);
+    assert_eq!(
+      part_two(
+        "mxmnhmsxvkd kfcds sqjhc nhms (contains dairy, fish)
+trh fvjkl sbzzf mxmnhmsxvkd (contains dairy)
+sqjhc fvjkl (contains soy)
+sqjhc fvjkl mxmnhmsxvkd (contains soy)
+sqjhc mxmnhmsxvkd sbzzf (contains fish)"
+      ),
+      "mxmnhmsxvkd,sqjhc,fvjkl"
+    );
   }
 }
