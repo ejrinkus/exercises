@@ -27,6 +27,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "aoc2021"
+version = "0.1.0"
+dependencies = [
+ "prompter 0.1.0",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
