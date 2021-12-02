@@ -1,5 +1,6 @@
 [workspace]
 members = [
+  "aoc-runner",
   "prompter",
   "aoc2015",
   "aoc2020",
