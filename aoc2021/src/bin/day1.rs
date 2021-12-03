@@ -1,12 +1,23 @@
 use aoc_helpers::*;
 
+const YEAR: u32 = 2021;
+const DAY: u32 = 1;
+
 fn main() {
-  let input = get_input(2021, 1);
+  let input = get_input(YEAR, DAY);
   if prompt_for_part(1) {
-    println!("Part one: {}", part_one(&input));
+    let result = part_one(&input);
+    println!("Part one: {}", result);
+    if prompt_to_submit() {
+      println!("{}", submit_answer(YEAR, DAY, 1, &result.to_string()));
+    }
   }
   if prompt_for_part(2) {
-    println!("Part two: {}", part_two(&input));
+    let result = part_two(&input);
+    println!("Part two: {}", result);
+    if prompt_to_submit() {
+      println!("{}", submit_answer(YEAR, DAY, 2, &result.to_string()));
+    }
   }
 }
 
