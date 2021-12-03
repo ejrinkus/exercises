@@ -1,3 +1,15 @@
+use aoc_helpers::*;
+
+fn main() {
+  let input = get_input(2021, 2);
+  if prompt_for_part(1) {
+    println!("Part one: {}", part_one(&input));
+  }
+  if prompt_for_part(2) {
+    println!("Part two: {}", part_two(&input));
+  }
+}
+
 pub fn part_one(input: &str) -> i64 {
   let mut horizontal = 0i64;
   let mut depth = 0i64;

@@ -1,6 +1,17 @@
+use aoc_helpers::*;
 use std::vec::Vec;
 
 const NUMS_LENGTH: usize = 12;
+
+fn main() {
+  let input = get_input(2021, 3);
+  if prompt_for_part(1) {
+    println!("Part one: {}", part_one(&input));
+  }
+  if prompt_for_part(2) {
+    println!("Part two: {}", part_two(&input));
+  }
+}
 
 pub fn part_one(input: &str) -> i64 {
   let mut gamma: [i32; NUMS_LENGTH] = [0; NUMS_LENGTH];
@@ -67,7 +78,6 @@ pub fn part_two(input: &str) -> i64 {
       break;
     }
   }
-  println!("o2 {} c02 {}", oxygen, c02);
   (oxygen * c02).into()
 }
 
