@@ -83,3 +83,4 @@ name = "day25"
 
 [dependencies]
 aoc-helpers = { path = "../aoc-helpers" }
+regex = "1"
