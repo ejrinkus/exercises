@@ -20,8 +20,9 @@ dependencies = [
 name = "aoc2015"
 version = "0.1.0"
 dependencies = [
+ "aoc-helpers",
  "md5",
- "prompter",
+ "regex",
 ]
 
 [[package]]
