@@ -1,4 +1,5 @@
 use aoc_helpers::*;
+use std::cmp::min;
 
 const YEAR: u32 = 2021;
 const DAY: u32 = 7;
@@ -37,22 +38,25 @@ pub fn part_one(input: &str) -> usize {
   l_fuel + r_fuel
 }
 
-pub fn part_two(input: &str) -> usize {
-  let crabs: Vec<usize> = input.trim().split(',').map(|n| n.parse::<usize>().unwrap()).collect();
-  // For some weird reason, the sample input requires ceil() or round() here.
-  // But the real input requires floor().  So I'm committing the code that
-  // solves the real input.
-  let average = ((crabs.iter().sum::<usize>() as f64) / (crabs.len() as f64)).floor() as usize;
+fn p2_fuel_for_location(crabs: &Vec<usize>, end: usize) -> usize {
   let mut fuel = 0;
   for c in crabs {
-    let n = if c < average {
-      average - c
+    let n = if *c < end {
+      end - c
     } else {
-      c - average
+      c - end
     };
     fuel += (n * (n + 1)) / 2;
   }
   fuel
+}
+
+pub fn part_two(input: &str) -> usize {
+  let crabs: Vec<usize> = input.trim().split(',').map(|n| n.parse::<usize>().unwrap()).collect();
+  let average = (crabs.iter().sum::<usize>() as f64) / (crabs.len() as f64);
+  // The correct end-position is either the average rounded up, or rounded down.
+  // Try both and use the better answer.
+  min(p2_fuel_for_location(&crabs, average.floor() as usize), p2_fuel_for_location(&crabs, average.ceil() as usize))
 }
 
 #[cfg(test)]
