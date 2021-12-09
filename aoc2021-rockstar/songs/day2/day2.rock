@@ -1,0 +1,20 @@
+(Do not) Listen to The Authority
+your progress is nothing
+the depth is nothing
+Until The Authority is gone
+  Shatter The Authority with " "
+  Put The Authority at 0 into the direction
+  Put The Authority at 1 into the power
+  Burn the power
+  If the direction is "forward"
+    Put your progress with the power into your progress
+  
+  If the direction is "down"
+    Put the depth with the power into the depth
+  
+  If the direction is "up"
+    Put the depth without the power into the depth
+  
+  Listen to The Authority
+
+Shout the depth of your progress
