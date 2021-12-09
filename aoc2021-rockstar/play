@@ -1,0 +1,39 @@
+#!/bin/bash
+SONG=""
+SIDE=""
+SOUNDTEST=""
+if [ "$#" -eq 3 ]; then
+  SONG="$1"
+  SIDE="$2"
+  SOUNDTEST="$3"
+elif [ "$#" -eq 0 ]; then
+  echo "Which song (1-25)? "
+  read SONG
+  echo "A-side or B-side (A/b)? "
+  read SIDE
+  SIDE="${SIDE,,}"
+  echo "Soundtest (leave empty to do it live)? "
+  read SOUNDTEST
+else
+  echo "Illegal arguments; either specify 3 args (<song number> <side> <soundtest number>), or no args at all"
+  return 1
+fi
+
+if [ -z "$SONG" ]; then
+  echo "Missing song"
+  return 1
+elif [ "$SIDE" = "b" ]; then
+  SONGNAME="day${SONG}_b_side"
+else
+  SONGNAME="day${SONG}"
+fi
+SONGFILE="./songs/day${SONG}/${SONGNAME}.rock"
+
+if [ -z "$SOUNDTEST" ]; then
+  LYRICNAME="$SONGNAME"
+else
+  LYRICNAME="${SONGNAME}_test${SOUNDTEST}"
+fi
+LYRICFILE="./lyrics/day${SONG}/${LYRICNAME}.txt"
+
+cat ${LYRICFILE} | ./rockstar run ${SONGFILE} --infinite-loops
