@@ -3,20 +3,20 @@ your progress is irrelevant
 your aim is extinction
 the depth is monumental
 Until The Authority is gone
-  Shatter The Authority with " "
-  Put The Authority at 0 into the direction
-  Put The Authority at 1 into the power
-  Burn the power
-  If the direction is "forward"
-    Put your progress with the power into your progress
-    Put the power of your aim with the depth into the depth
+Shatter The Authority with " "
+Put The Authority at 0 into the direction
+Put The Authority at 1 into the power
+Burn the power
+If the direction is "forward"
+Put your progress with the power into your progress
+Put the power of your aim with the depth into the depth
   
-  If the direction is "down"
-    Put your aim with the power into your aim
+If the direction is "down"
+Put your aim with the power into your aim
   
-  If the direction is "up"
-    Put your aim without the power into your aim
+If the direction is "up"
+Put your aim without the power into your aim
   
-  Listen to The Authority
+Listen to The Authority
 
 Shout the depth of your progress
