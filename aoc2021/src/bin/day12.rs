@@ -113,7 +113,7 @@ pub fn part_two(input: &str) -> usize {
 }
 
 #[cfg(test)]
-mod day2_tests {
+mod day12_tests {
   use super::*;
 
   #[test]

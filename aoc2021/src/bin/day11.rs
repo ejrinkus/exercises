@@ -153,7 +153,7 @@ pub fn part_two(input: &str) -> i64 {
 }
 
 #[cfg(test)]
-mod day2_tests {
+mod day11_tests {
   use super::*;
 
   #[test]

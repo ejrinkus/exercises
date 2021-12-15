@@ -109,7 +109,7 @@ pub fn part_two(input: &str) -> u64 {
 }
 
 #[cfg(test)]
-mod day2_tests {
+mod day10_tests {
   use super::*;
 
   #[test]
