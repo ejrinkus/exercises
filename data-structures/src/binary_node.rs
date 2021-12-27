@@ -59,5 +59,3 @@ impl<V: Debug + Default + Ord> Display for BinaryNode<V> {
         return write!(f, "{{ {:?} -> (left=None, right=None)}}", self.value);
     }
 }
-
-struct BinaryHeap {}
