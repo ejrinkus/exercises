@@ -5,5 +5,7 @@ members = [
     "aoc2021",
     "aoc2020",
     "aoc2015",
+    "cargo-init-aoc",
     "data-structures",
 ]
+resolver = "2"
