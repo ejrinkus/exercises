@@ -17,13 +17,18 @@ pub fn run<T: AocSolution>(solution: &T) {
         solution.day()
     );
     let input = get_input(solution.year(), solution.day());
-    for i in 1..=2 {
-        if prompt_for_part(i) {
-            let result = solution.part_one(&input);
-            println!("{}", result);
-            if prompt_to_submit() {
-                submit_answer(solution.year(), solution.day(), i.into(), &result);
-            }
+    if prompt_for_part(1) {
+        let result = solution.part_one(&input);
+        println!("{}", result);
+        if prompt_to_submit() {
+            submit_answer(solution.year(), solution.day(), 1, &result);
+        }
+    }
+    if prompt_for_part(2) {
+        let result = solution.part_two(&input);
+        println!("{}", result);
+        if prompt_to_submit() {
+            submit_answer(solution.year(), solution.day(), 2, &result);
         }
     }
 }
