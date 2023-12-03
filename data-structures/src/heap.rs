@@ -60,4 +60,4 @@ impl<V: Debug + Default + Ord> Display for BinaryNode<V> {
     }
 }
 
-struct BinaryHeap {}
+// struct BinaryHeap {}

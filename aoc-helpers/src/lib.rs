@@ -1,9 +1,34 @@
 use isahc::{prelude::*, send, Request};
 use std::io::{self, Write};
 
-const SESSION_COOKIE: &str = "53616c7465645f5fe9df7ddefd3d66a94d0ee4bffb4ffb1a413d7cc8660ba3f9678af6676b437609597602b7f2f21b46";
+const SESSION_COOKIE: &str = include_str!("session.cookie");
 
-pub fn get_input(year: u32, day: u32) -> String {
+pub trait AocSolution {
+    fn year(&self) -> u32;
+    fn day(&self) -> u32;
+    fn part_one(&self, input: &str) -> String;
+    fn part_two(&self, input: &str) -> String;
+}
+
+pub fn run<T: AocSolution>(solution: &T) {
+    println!(
+        "Running AoC {} day {} solution...",
+        solution.year(),
+        solution.day()
+    );
+    let input = get_input(solution.year(), solution.day());
+    for i in 1..=2 {
+        if prompt_for_part(i) {
+            let result = solution.part_one(&input);
+            println!("{}", result);
+            if prompt_to_submit() {
+                submit_answer(solution.year(), solution.day(), i.into(), &result);
+            }
+        }
+    }
+}
+
+fn get_input(year: u32, day: u32) -> String {
     let mut response = send(
         Request::get(format!(
             "https://adventofcode.com/{}/day/{}/input",
@@ -18,7 +43,7 @@ pub fn get_input(year: u32, day: u32) -> String {
     response.text().unwrap()
 }
 
-pub fn submit_answer(year: u32, day: u32, part: u32, answer: &str) -> String {
+fn submit_answer(year: u32, day: u32, part: u32, answer: &str) -> String {
     let mut response = send(
         Request::post(format!(
             "https://adventofcode.com/{}/day/{}/answer",
@@ -43,7 +68,7 @@ pub fn submit_answer(year: u32, day: u32, part: u32, answer: &str) -> String {
         .to_string()
 }
 
-pub fn prompt_for_part(part: u8) -> bool {
+fn prompt_for_part(part: u8) -> bool {
     let mut input = String::new();
     print!("Run part {} (y/N)? ", part);
     io::stdout().flush().unwrap();
@@ -55,7 +80,7 @@ pub fn prompt_for_part(part: u8) -> bool {
     output == "y" || output == "Y" || output == "yes"
 }
 
-pub fn prompt_to_submit() -> bool {
+fn prompt_to_submit() -> bool {
     let mut input = String::new();
     print!("Submit answer (y/N)? ");
     io::stdout().flush().unwrap();
