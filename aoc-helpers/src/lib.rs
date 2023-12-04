@@ -102,3 +102,12 @@ fn prompt_to_submit() -> bool {
 
     output == "y" || output == "Y" || output == "yes"
 }
+
+pub fn parse_matrix(input: &str) -> Vec<Vec<char>> {
+    let mut matrix: Vec<Vec<char>> = Vec::with_capacity(input.lines().count());
+    for l in input.lines() {
+        let row: Vec<char> = l.chars().collect();
+        matrix.push(row);
+    }
+    matrix
+}

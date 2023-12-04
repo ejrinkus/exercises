@@ -39,7 +39,7 @@ enum AdjacencyResponse {
 }
 
 pub fn part_one(input: &str) -> u32 {
-    let matrix = parse(input);
+    let matrix = parse_matrix(input);
 
     let mut part_valid = false;
     let mut part_start = false;
@@ -94,7 +94,7 @@ pub fn part_one(input: &str) -> u32 {
 }
 
 pub fn part_two(input: &str) -> u32 {
-    let matrix = parse(input);
+    let matrix = parse_matrix(input);
     // Each kv pair is (r_gear, c_gear) -> parts where:
     // - r_gear is the row of the gear
     // - c_gear is the column of the gear
@@ -166,15 +166,6 @@ pub fn part_two(input: &str) -> u32 {
     }
 
     sum
-}
-
-fn parse(schematic: &str) -> Vec<Vec<char>> {
-    let mut matrix: Vec<Vec<char>> = Vec::with_capacity(schematic.lines().count());
-    for l in schematic.lines() {
-        let row: Vec<char> = l.chars().collect();
-        matrix.push(row);
-    }
-    matrix
 }
 
 fn is_symbol(c: char) -> SymbolResponse {
