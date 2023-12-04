@@ -17,82 +17,62 @@ impl AocSolution for Solution {
     }
 
     fn part_one(&self, input: &str) -> String {
-        part_one(input).to_string()
+        let max_red = 12u32;
+        let max_green = 13u32;
+        let max_blue = 14u32;
+        let mut sum = 0u32;
+        input.lines().for_each(|l| {
+            let results = max_colors_for_game(l);
+            if results.1 <= max_red && results.2 <= max_green && results.3 <= max_blue {
+                sum += results.0;
+            }
+        });
+        sum.to_string()
     }
 
     fn part_two(&self, input: &str) -> String {
-        part_two(input).to_string()
+        let mut sum = 0u32;
+        input.lines().for_each(|l| {
+            let results = max_colors_for_game(l);
+            sum += results.1 * results.2 * results.3;
+        });
+        sum.to_string()
     }
 }
 
-pub fn part_one(input: &str) -> u32 {
-    let max_red = 12u32;
-    let max_green = 13u32;
-    let max_blue = 14u32;
-    let mut sum = 0u32;
-    input.lines().for_each(|l| {
-        let results = parse(l);
-        if results.1 <= max_red && results.2 <= max_green && results.3 <= max_blue {
-            sum += results.0;
-        }
-    });
-    sum
-}
+fn max_colors_for_game(game: &str) -> (u32, u32, u32, u32) {
+    let id_re: Regex = Regex::new(r"^Game (\d+)").expect("Failed to compile id regex");
+    let id = id_re
+        .captures(game)
+        .expect("Failed to get captures on id regex")
+        .get(1)
+        .expect("Failed to retrieve first capture group from id regex")
+        .as_str()
+        .parse::<u32>()
+        .expect("Failed to parse id to number");
 
-pub fn part_two(input: &str) -> u32 {
-    let mut sum = 0u32;
-    input.lines().for_each(|l| {
-        let results = parse(l);
-        sum += results.1 * results.2 * results.3;
-    });
-    sum
-}
+    let red_re: Regex = Regex::new(r"(\d+) red").expect("Failed to compile red regex");
+    let max_red = red_re
+        .captures_iter(game)
+        .map(|c| c.extract::<1usize>().1[0].parse::<u32>().unwrap())
+        .max()
+        .expect("Failed to find max red count");
 
-fn parse(game: &str) -> (u32, u32, u32, u32) {
-    let id_and_draws = game.split(':').collect::<Vec<&str>>();
-    let id_str = id_and_draws[0].split(' ').collect::<Vec<&str>>()[1];
+    let green_re: Regex = Regex::new(r"(\d+) green").expect("Failed to compile green regex");
+    let max_green = green_re
+        .captures_iter(game)
+        .map(|c| c.extract::<1usize>().1[0].parse::<u32>().unwrap())
+        .max()
+        .expect("Failed to find max green count");
 
-    let draws = id_and_draws[1].split(';').collect::<Vec<&str>>();
+    let blue_re: Regex = Regex::new(r"(\d+) blue").expect("Failed to compile blue regex");
+    let max_blue = blue_re
+        .captures_iter(game)
+        .map(|c| c.extract::<1usize>().1[0].parse::<u32>().unwrap())
+        .max()
+        .expect("Failed to find max blue count");
 
-    let red_re: Regex = Regex::new(r"(\d+) red").unwrap();
-    let green_re: Regex = Regex::new(r"(\d+) green").unwrap();
-    let blue_re: Regex = Regex::new(r"(\d+) blue").unwrap();
-
-    let mut max_red = 0u32;
-    let mut max_green = 0u32;
-    let mut max_blue = 0u32;
-    for draw in draws {
-        let maybe_red = red_re.captures(draw);
-        if maybe_red.is_some() {
-            let red = maybe_red.expect("red should've been Some")[1]
-                .parse::<u32>()
-                .expect("didn't get number for red");
-            max_red = if red > max_red { red } else { max_red };
-        }
-        let maybe_green = green_re.captures(draw);
-        if maybe_green.is_some() {
-            let green = maybe_green.expect("green should've been Some")[1]
-                .parse::<u32>()
-                .expect("didn't get number for green");
-            max_green = if green > max_green { green } else { max_green };
-        }
-        let maybe_blue = blue_re.captures(draw);
-        if maybe_blue.is_some() {
-            let blue = maybe_blue.expect("blue should've been Some")[1]
-                .parse::<u32>()
-                .expect("didn't get number for blue");
-            max_blue = if blue > max_blue { blue } else { max_blue };
-        }
-    }
-
-    (
-        id_str
-            .parse::<u32>()
-            .expect("uh-oh, didn't get a number for the id"),
-        max_red,
-        max_green,
-        max_blue,
-    )
+    (id, max_red, max_green, max_blue)
 }
 
 #[cfg(test)]
@@ -101,29 +81,31 @@ mod day1_tests {
 
     #[test]
     fn samples_part1() {
+        let solution = Solution {};
         assert_eq!(
-            part_one(
+            solution.part_one(
                 "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
 Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
 Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
 Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
 Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green"
             ),
-            8
+            "8"
         );
     }
 
     #[test]
     fn samples_part2() {
+        let solution = Solution {};
         assert_eq!(
-            part_two(
+            solution.part_two(
                 "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
 Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
 Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
 Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
 Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green"
             ),
-            2286
+            "2286"
         );
     }
 }
