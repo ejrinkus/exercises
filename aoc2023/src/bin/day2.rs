@@ -17,14 +17,11 @@ impl AocSolution for Solution {
     }
 
     fn part_one(&self, input: &str) -> String {
-        let max_red = 12u32;
-        let max_green = 13u32;
-        let max_blue = 14u32;
         let mut sum = 0u32;
         input.lines().for_each(|l| {
             let results = max_colors_for_game(l);
-            if results.1 <= max_red && results.2 <= max_green && results.3 <= max_blue {
-                sum += results.0;
+            if results.red <= 12 && results.green <= 13 && results.blue <= 14 {
+                sum += results.id;
             }
         });
         sum.to_string()
@@ -34,13 +31,20 @@ impl AocSolution for Solution {
         let mut sum = 0u32;
         input.lines().for_each(|l| {
             let results = max_colors_for_game(l);
-            sum += results.1 * results.2 * results.3;
+            sum += results.red * results.blue * results.green;
         });
         sum.to_string()
     }
 }
 
-fn max_colors_for_game(game: &str) -> (u32, u32, u32, u32) {
+struct ColorsResponse {
+    id: u32,
+    red: u32,
+    green: u32,
+    blue: u32,
+}
+
+fn max_colors_for_game(game: &str) -> ColorsResponse {
     let id_re: Regex = Regex::new(r"^Game (\d+)").expect("Failed to compile id regex");
     let id = id_re
         .captures(game)
@@ -72,7 +76,12 @@ fn max_colors_for_game(game: &str) -> (u32, u32, u32, u32) {
         .max()
         .expect("Failed to find max blue count");
 
-    (id, max_red, max_green, max_blue)
+    ColorsResponse {
+        id: id,
+        red: max_red,
+        green: max_green,
+        blue: max_blue,
+    }
 }
 
 #[cfg(test)]
