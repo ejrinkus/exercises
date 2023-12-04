@@ -30,73 +30,18 @@ fn solution(input: &str, inc_text: bool) -> u32 {
         let mut first: Option<u32> = None;
         let mut second: Option<u32> = None;
         l.chars().enumerate().for_each(|(i, c)| {
-            let digit = c.to_digit(10);
-            if digit.is_some() {
+            if let Some(digit) = c.to_digit(10) {
                 if first.is_none() {
-                    first = Some(digit.expect("uh-oh, tried to unwrap a char that isn't a digit"));
+                    first = Some(digit);
                 } else {
-                    second = Some(digit.expect("uh-oh, tried to unwrap a char that isn't a digit"));
+                    second = Some(digit);
                 }
             } else if inc_text {
-                if i + 3 <= l.len() && l.get(i..i + 3) == Some("one") {
+                if let Some(digit) = text_to_digit(l, i) {
                     if first.is_none() {
-                        first = Some(1);
+                        first = Some(digit.into());
                     } else {
-                        second = Some(1);
-                    }
-                } else if i + 3 <= l.len() && l.get(i..i + 3) == Some("two") {
-                    if first.is_none() {
-                        first = Some(2);
-                    } else {
-                        second = Some(2);
-                    }
-                } else if i + 5 <= l.len() && l.get(i..i + 5) == Some("three") {
-                    if first.is_none() {
-                        first = Some(3);
-                    } else {
-                        second = Some(3);
-                    }
-                } else if i + 4 <= l.len() && l.get(i..i + 4) == Some("four") {
-                    if first.is_none() {
-                        first = Some(4);
-                    } else {
-                        second = Some(4);
-                    }
-                } else if i + 4 <= l.len() && l.get(i..i + 4) == Some("five") {
-                    if first.is_none() {
-                        first = Some(5);
-                    } else {
-                        second = Some(5);
-                    }
-                } else if i + 3 <= l.len() && l.get(i..i + 3) == Some("six") {
-                    if first.is_none() {
-                        first = Some(6);
-                    } else {
-                        second = Some(6);
-                    }
-                } else if i + 5 <= l.len() && l.get(i..i + 5) == Some("seven") {
-                    if first.is_none() {
-                        first = Some(7);
-                    } else {
-                        second = Some(7);
-                    }
-                } else if i + 5 <= l.len() && l.get(i..i + 5) == Some("eight") {
-                    if first.is_none() {
-                        first = Some(8);
-                    } else {
-                        second = Some(8);
-                    }
-                } else if i + 4 <= l.len() && l.get(i..i + 4) == Some("nine") {
-                    if first.is_none() {
-                        first = Some(9);
-                    } else {
-                        second = Some(9);
-                    }
-                } else if i + 4 <= l.len() && l.get(i..i + 4) == Some("zero") {
-                    if first.is_none() {
-                        first = Some(0);
-                    } else {
-                        second = Some(0);
+                        second = Some(digit.into());
                     }
                 }
             }
