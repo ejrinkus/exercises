@@ -1,4 +1,4 @@
-use aoc2015::circuit::Circuit;
+use aoc_2015_libs::circuit::Circuit;
 use aoc_helpers::*;
 use regex::{Captures, Regex};
 

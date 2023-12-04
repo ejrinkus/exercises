@@ -21,14 +21,20 @@ pub fn run<T: AocSolution>(solution: &T) {
         let result = solution.part_one(&input);
         println!("{}", result);
         if prompt_to_submit() {
-            submit_answer(solution.year(), solution.day(), 1, &result);
+            println!(
+                "{}",
+                submit_answer(solution.year(), solution.day(), 1, &result)
+            );
         }
     }
     if prompt_for_part(2) {
         let result = solution.part_two(&input);
         println!("{}", result);
         if prompt_to_submit() {
-            submit_answer(solution.year(), solution.day(), 2, &result);
+            println!(
+                "{}",
+                submit_answer(solution.year(), solution.day(), 2, &result)
+            );
         }
     }
 }

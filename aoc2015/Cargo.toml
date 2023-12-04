@@ -1,8 +1,12 @@
 [package]
 name = "aoc2015"
 version = "0.1.0"
-authors = ["ejrinkus"]
-edition = "2018"
+authors = ["Eric Rinkus <ejrinkus@gmail.com>"]
+edition = "2021"
+
+[lib]
+name = "aoc_2015_libs"
+path = "src/lib/lib.rs"
 
 [[bin]]
 name = "day1"
@@ -42,6 +46,42 @@ name = "day12"
 
 [[bin]]
 name = "day13"
+
+[[bin]]
+name = "day14"
+
+[[bin]]
+name = "day15"
+
+[[bin]]
+name = "day16"
+
+[[bin]]
+name = "day17"
+
+[[bin]]
+name = "day18"
+
+[[bin]]
+name = "day19"
+
+[[bin]]
+name = "day20"
+
+[[bin]]
+name = "day21"
+
+[[bin]]
+name = "day22"
+
+[[bin]]
+name = "day23"
+
+[[bin]]
+name = "day24"
+
+[[bin]]
+name = "day25"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
