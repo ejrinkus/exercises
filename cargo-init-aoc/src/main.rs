@@ -168,7 +168,8 @@ regex = \"1\"
             .expect("Failed to create aoc solution file");
         file.write_all(
             format!(
-                "use aoc_helpers::*;
+                "use aoc_helpers::parsing::*;
+use aoc_helpers::runner::*;                
 
 fn main() {{
     let solution = Solution {{}};

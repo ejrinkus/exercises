@@ -1,4 +1,5 @@
-use aoc_helpers::*;
+use aoc_helpers::parsing::*;
+use aoc_helpers::runner::*;
 
 fn main() {
     let solution = Solution {};
@@ -40,4 +41,3 @@ mod day1_tests {
         assert_eq!(solution.part_two(""), "");
     }
 }
-

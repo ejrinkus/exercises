@@ -1,5 +1,6 @@
 use aoc_2015_libs::circuit::Circuit;
-use aoc_helpers::*;
+use aoc_helpers::parsing::*;
+use aoc_helpers::runner::*;
 use regex::{Captures, Regex};
 
 fn main() {
