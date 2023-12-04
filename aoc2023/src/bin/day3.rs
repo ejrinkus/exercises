@@ -310,8 +310,9 @@ mod day1_tests {
 
     #[test]
     fn samples_part1() {
+        let solution = Solution {};
         assert_eq!(
-            part_one(
+            solution.part_one(
                 "467..114..
 ...*......
 ..35..633.
@@ -323,14 +324,15 @@ mod day1_tests {
 ...$.*....
 .664.598.."
             ),
-            4361
+            "4361"
         );
     }
 
     #[test]
     fn samples_part2() {
+        let solution = Solution {};
         assert_eq!(
-            part_two(
+            solution.part_two(
                 "467..114..
 ...*......
 ..35..633.
@@ -342,7 +344,7 @@ mod day1_tests {
 ...$.*....
 .664.598.."
             ),
-            467835
+            "467835"
         );
     }
 }
