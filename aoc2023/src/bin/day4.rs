@@ -18,12 +18,12 @@ impl AocSolution for Solution {
 
     fn part_one(&self, input: &str) -> String {
         let mut sum = 0u32;
-        input.lines().for_each(|line| {
+        for line in input.lines() {
             let matches = parse_card(line);
             if matches > 0 {
                 sum += 2u32.pow(matches - 1);
             }
-        });
+        }
         sum.to_string()
     }
 
@@ -51,23 +51,21 @@ impl AocSolution for Solution {
 }
 
 fn parse_card(card: &str) -> u32 {
+    let pieces: Vec<&str> = card.split(' ').collect();
     let mut points = 0u32;
-    let pieces = card.split(' ').collect::<Vec<&str>>();
     let mut switch = false;
     let mut winning_nums: HashSet<u32> = HashSet::new();
     for piece in pieces {
-        if piece == "Card" || piece == "" || piece.contains(':') {
-            continue;
-        }
         if piece == "|" {
             switch = true;
             continue;
         }
-        let num = piece.parse::<u32>().unwrap();
-        if !switch {
-            winning_nums.insert(num);
-        } else if winning_nums.contains(&num) {
-            points += 1;
+        if let Ok(num) = piece.parse::<u32>() {
+            if !switch {
+                winning_nums.insert(num);
+            } else if winning_nums.contains(&num) {
+                points += 1;
+            }
         }
     }
     points
