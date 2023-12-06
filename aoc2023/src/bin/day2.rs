@@ -2,6 +2,7 @@ use aoc_helpers::runner::*;
 use nom::bytes::complete::*;
 use nom::character::complete::*;
 use nom::error::Error;
+use nom::IResult;
 
 fn main() {
     let solution = Solution {};
@@ -46,31 +47,59 @@ struct ColorsResponse {
     blue: u32,
 }
 
+fn tag_game(s: &str) -> IResult<&str, &str> {
+    tag_no_case("game ")(s)
+}
+
+fn tag_red(s: &str) -> IResult<&str, &str> {
+    tag_no_case("red")(s)
+}
+
+fn tag_green(s: &str) -> IResult<&str, &str> {
+    tag_no_case("green")(s)
+}
+
+fn tag_blue(s: &str) -> IResult<&str, &str> {
+    tag_no_case("blue")(s)
+}
+
+fn take1(s: &str) -> IResult<&str, &str> {
+    take(1usize)(s)
+}
+
+fn take2(s: &str) -> IResult<&str, &str> {
+    take(2usize)(s)
+}
+
+fn take_number(s: &str) -> IResult<&str, &str> {
+    digit1(s)
+}
+
 fn max_colors_for_game(game: &str) -> ColorsResponse {
     let mut rem: &str;
     let mut taken: &str;
 
-    (rem, _) = tag::<&_, &_, Error<&_>>("Game ")(game).expect("Game didn't start with \"Game\"");
+    (rem, _) = tag_game(game).expect("Game didn't start with \"Game\"");
     (rem, taken) = digit1::<&_, Error<&_>>(rem).expect("Missing game ID");
     let id = taken.parse::<u32>().expect("Malformed game ID");
 
     let mut max_colors = vec![0, 0, 0]; // RGB
     while rem != "" {
-        (rem, _) = take::<usize, &_, Error<&_>>(2usize)(rem).expect("Missing delimiters");
-        (rem, taken) = digit1::<&_, Error<&_>>(rem).expect("Missing cube count");
+        (rem, _) = take2(rem).expect("Missing delimiters");
+        (rem, taken) = take_number(rem).expect("Missing cube count");
         let count = taken.parse::<u32>().expect("Malformed count");
-        (rem, _) = space1::<&_, Error<&_>>(rem).expect("Missing space after count");
-        if let Ok((maybe_rem, _)) = tag::<&_, &_, Error<&_>>("red")(rem) {
+        (rem, _) = take1(rem).expect("Missing space after count");
+        if let Ok((maybe_rem, _)) = tag_red(rem) {
             if max_colors[0] < count {
                 max_colors[0] = count;
             }
             rem = maybe_rem;
-        } else if let Ok((maybe_rem, _)) = tag::<&_, &_, Error<&_>>("green")(rem) {
+        } else if let Ok((maybe_rem, _)) = tag_green(rem) {
             if max_colors[1] < count {
                 max_colors[1] = count;
             }
             rem = maybe_rem;
-        } else if let Ok((maybe_rem, _)) = tag::<&_, &_, Error<&_>>("blue")(rem) {
+        } else if let Ok((maybe_rem, _)) = tag_blue(rem) {
             if max_colors[2] < count {
                 max_colors[2] = count;
             }
