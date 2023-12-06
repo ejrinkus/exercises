@@ -17,40 +17,30 @@ impl AocSolution for Solution {
     }
 
     fn part_one(&self, input: &str) -> String {
-        let mut sum = 0u32;
-        for line in input.lines() {
-            let mut first_digit: Option<u8> = None;
-            let mut second_digit: Option<u8> = None;
-            let mut remainder = line;
-            while let (rem, Some(num)) = get_next_digit(remainder, false, false) {
-                remainder = rem;
-                if first_digit.is_none() {
-                    first_digit = Some(num);
-                }
-                second_digit = Some(num);
-            }
-            sum += ((first_digit.unwrap_or(0) as u32) * 10) + (second_digit.unwrap_or(0) as u32);
-        }
-        sum.to_string()
+        solution(input, false)
     }
 
     fn part_two(&self, input: &str) -> String {
-        let mut sum = 0u32;
-        for line in input.lines() {
-            let mut first_digit: Option<u8> = None;
-            let mut second_digit: Option<u8> = None;
-            let mut remainder = line;
-            while let (rem, Some(num)) = get_next_digit(remainder, true, false) {
-                remainder = rem;
-                if first_digit.is_none() {
-                    first_digit = Some(num);
-                }
-                second_digit = Some(num);
-            }
-            sum += ((first_digit.unwrap_or(0) as u32) * 10) + (second_digit.unwrap_or(0) as u32);
-        }
-        sum.to_string()
+        solution(input, true)
     }
+}
+
+fn solution(input: &str, inc_text: bool) -> String {
+    let mut sum = 0u32;
+    for line in input.lines() {
+        let mut first_digit: Option<u8> = None;
+        let mut second_digit: Option<u8> = None;
+        let mut remainder = line;
+        while let (rem, Some(num)) = get_next_digit(remainder, inc_text, false) {
+            remainder = rem;
+            if first_digit.is_none() {
+                first_digit = Some(num);
+            }
+            second_digit = Some(num);
+        }
+        sum += ((first_digit.unwrap_or(0) as u32) * 10) + (second_digit.unwrap_or(0) as u32);
+    }
+    sum.to_string()
 }
 
 #[cfg(test)]
