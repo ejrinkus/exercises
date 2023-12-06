@@ -1,5 +1,7 @@
 use aoc_helpers::runner::*;
-use regex::Regex;
+use nom::bytes::complete::*;
+use nom::character::complete::*;
+use nom::error::Error;
 
 fn main() {
     let solution = Solution {};
@@ -45,42 +47,44 @@ struct ColorsResponse {
 }
 
 fn max_colors_for_game(game: &str) -> ColorsResponse {
-    let id_re: Regex = Regex::new(r"^Game (\d+)").expect("Failed to compile id regex");
-    let id = id_re
-        .captures(game)
-        .expect("Failed to get captures on id regex")
-        .get(1)
-        .expect("Failed to retrieve first capture group from id regex")
-        .as_str()
-        .parse::<u32>()
-        .expect("Failed to parse id to number");
+    let mut rem: &str;
+    let mut taken: &str;
 
-    let red_re: Regex = Regex::new(r"(\d+) red").expect("Failed to compile red regex");
-    let max_red = red_re
-        .captures_iter(game)
-        .map(|c| c.extract::<1usize>().1[0].parse::<u32>().unwrap())
-        .max()
-        .expect("Failed to find max red count");
+    (rem, _) = tag::<&_, &_, Error<&_>>("Game ")(game).expect("Game didn't start with \"Game\"");
+    (rem, taken) = digit1::<&_, Error<&_>>(rem).expect("Missing game ID");
+    let id = taken.parse::<u32>().expect("Malformed game ID");
 
-    let green_re: Regex = Regex::new(r"(\d+) green").expect("Failed to compile green regex");
-    let max_green = green_re
-        .captures_iter(game)
-        .map(|c| c.extract::<1usize>().1[0].parse::<u32>().unwrap())
-        .max()
-        .expect("Failed to find max green count");
-
-    let blue_re: Regex = Regex::new(r"(\d+) blue").expect("Failed to compile blue regex");
-    let max_blue = blue_re
-        .captures_iter(game)
-        .map(|c| c.extract::<1usize>().1[0].parse::<u32>().unwrap())
-        .max()
-        .expect("Failed to find max blue count");
+    let mut max_colors = vec![0, 0, 0]; // RGB
+    while rem != "" {
+        (rem, _) = take::<usize, &_, Error<&_>>(2usize)(rem).expect("Missing delimiters");
+        (rem, taken) = digit1::<&_, Error<&_>>(rem).expect("Missing cube count");
+        let count = taken.parse::<u32>().expect("Malformed count");
+        (rem, _) = space1::<&_, Error<&_>>(rem).expect("Missing space after count");
+        if let Ok((maybe_rem, _)) = tag::<&_, &_, Error<&_>>("red")(rem) {
+            if max_colors[0] < count {
+                max_colors[0] = count;
+            }
+            rem = maybe_rem;
+        } else if let Ok((maybe_rem, _)) = tag::<&_, &_, Error<&_>>("green")(rem) {
+            if max_colors[1] < count {
+                max_colors[1] = count;
+            }
+            rem = maybe_rem;
+        } else if let Ok((maybe_rem, _)) = tag::<&_, &_, Error<&_>>("blue")(rem) {
+            if max_colors[2] < count {
+                max_colors[2] = count;
+            }
+            rem = maybe_rem;
+        } else {
+            panic!("Didn't get a valid color");
+        }
+    }
 
     ColorsResponse {
         id: id,
-        red: max_red,
-        green: max_green,
-        blue: max_blue,
+        red: max_colors[0],
+        green: max_colors[1],
+        blue: max_colors[2],
     }
 }
 
