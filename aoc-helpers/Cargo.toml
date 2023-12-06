@@ -12,3 +12,5 @@ path = "src/lib/lib.rs"
 
 [dependencies]
 isahc = "1.7.2"
+lazy_static = "1.4.0"
+nom = "7.1.3"

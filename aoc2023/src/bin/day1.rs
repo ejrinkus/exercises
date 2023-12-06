@@ -17,41 +17,40 @@ impl AocSolution for Solution {
     }
 
     fn part_one(&self, input: &str) -> String {
-        solution(input, false).to_string()
+        let mut sum = 0u32;
+        for line in input.lines() {
+            let mut first_digit: Option<u8> = None;
+            let mut second_digit: Option<u8> = None;
+            let mut remainder = line;
+            while let (rem, Some(num)) = get_next_digit(remainder, false, false) {
+                remainder = rem;
+                if first_digit.is_none() {
+                    first_digit = Some(num);
+                }
+                second_digit = Some(num);
+            }
+            sum += ((first_digit.unwrap_or(0) as u32) * 10) + (second_digit.unwrap_or(0) as u32);
+        }
+        sum.to_string()
     }
 
     fn part_two(&self, input: &str) -> String {
-        solution(input, true).to_string()
-    }
-}
-
-fn solution(input: &str, inc_text: bool) -> u32 {
-    let mut sum = 0u32;
-    input.lines().for_each(|l| {
-        let mut first: Option<u32> = None;
-        let mut second: Option<u32> = None;
-        l.chars().enumerate().for_each(|(i, c)| {
-            if let Some(digit) = c.to_digit(10) {
-                if first.is_none() {
-                    first = Some(digit);
-                } else {
-                    second = Some(digit);
+        let mut sum = 0u32;
+        for line in input.lines() {
+            let mut first_digit: Option<u8> = None;
+            let mut second_digit: Option<u8> = None;
+            let mut remainder = line;
+            while let (rem, Some(num)) = get_next_digit(remainder, true, false) {
+                remainder = rem;
+                if first_digit.is_none() {
+                    first_digit = Some(num);
                 }
-            } else if inc_text {
-                if let Some(digit) = text_to_digit(l, i) {
-                    if first.is_none() {
-                        first = Some(digit.into());
-                    } else {
-                        second = Some(digit.into());
-                    }
-                }
+                second_digit = Some(num);
             }
-        });
-        let unwrapped_first = first.unwrap_or(0);
-        let unwrapped_second = second.unwrap_or(unwrapped_first);
-        sum += (unwrapped_first * 10) + unwrapped_second;
-    });
-    sum
+            sum += ((first_digit.unwrap_or(0) as u32) * 10) + (second_digit.unwrap_or(0) as u32);
+        }
+        sum.to_string()
+    }
 }
 
 #[cfg(test)]
@@ -83,9 +82,10 @@ abcone2threexyz
 xtwone3four
 4nineeightseven2
 zoneight234
-7pqrstsixteen"
+7pqrstsixteen
+zoneight"
             ),
-            "281"
+            "299"
         );
     }
 }

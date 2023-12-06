@@ -87,4 +87,5 @@ name = "day25"
 
 [dependencies]
 aoc-helpers = { path = "../aoc-helpers" }
+nom = "7.1.3"
 regex = "1"
