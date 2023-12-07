@@ -1,7 +1,5 @@
+use aoc_helpers::parsing::*;
 use aoc_helpers::runner::*;
-use nom::bytes::complete::*;
-use nom::character::complete::*;
-use nom::error::Error;
 use std::cmp::{max, min};
 use std::collections::VecDeque;
 use std::str::Lines;
@@ -58,34 +56,31 @@ impl AocSolution for Solution {
 }
 
 fn get_seeds(line: &str) -> VecDeque<u64> {
-    let (mut remainder, _): (&str, &str) =
-        tag::<&str, &str, Error<&str>>("seeds: ")(line).expect("Failed to parse seed line");
+    let mut remainder: &str;
+
+    (remainder, _) = take_tag(line, "seeds:").expect("Failed to parse seed line");
 
     let mut seeds: VecDeque<u64> = VecDeque::new();
-    while let Ok((rem, num)) = u64::<&str, Error<&str>>(remainder) {
+    while let Ok((rem, _)) = take_spaces(remainder) {
+        let (rem, num) = take_u64(rem).expect("Missing seed");
         seeds.push_back(num);
-        if let Ok((trimmed, _)) = space1::<&str, Error<&str>>(rem) {
-            remainder = trimmed;
-        } else {
-            remainder = rem;
-        }
+        remainder = rem
     }
     seeds
 }
 
 fn get_seeds_as_ranges(line: &str) -> VecDeque<(u64, u64)> {
-    let (mut remainder, _): (&str, &str) =
-        tag::<&str, &str, Error<&str>>("seeds: ")(line).expect("Failed to parse seed line");
+    let mut remainder: &str;
+
+    (remainder, _) = take_tag(line, "seeds:").expect("Failed to parse seed line");
 
     let mut seeds: VecDeque<u64> = VecDeque::new();
-    while let Ok((rem, num)) = u64::<&str, Error<&str>>(remainder) {
+    while let Ok((rem, _)) = take_spaces(remainder) {
+        let (rem, num) = take_u64(rem).expect("Missing seed");
         seeds.push_back(num);
-        if let Ok((trimmed, _)) = space1::<&str, Error<&str>>(rem) {
-            remainder = trimmed;
-        } else {
-            remainder = rem;
-        }
+        remainder = rem
     }
+
     let mut ranges: VecDeque<(u64, u64)> = VecDeque::with_capacity(seeds.len() / 2);
     for _i in 0..(seeds.len() / 2) {
         let start = seeds.pop_front().unwrap();
@@ -161,22 +156,18 @@ fn update_ranges(lines: &mut Lines, mut old_ranges: VecDeque<(u64, u64)>) -> Vec
 }
 
 fn parse_map_line(line: &str) -> (u64, u64, u64) {
-    let mut read_result = u64::<&str, Error<&str>>(line).unwrap();
-    let mut rem = read_result.0;
-    let dest_start = read_result.1;
-    let mut trim_result = space1::<&str, Error<&str>>(rem).unwrap();
-    let mut remainder = trim_result.0;
+    let mut rem = line;
+    let mut result: (u64, u64, u64) = (0, 0, 0);
 
-    read_result = u64::<&str, Error<&str>>(remainder).unwrap();
-    rem = read_result.0;
-    let src_start = read_result.1;
-    trim_result = space1::<&str, Error<&str>>(rem).unwrap();
-    remainder = trim_result.0;
+    (rem, result.0) = take_u64(rem).expect("Missing dest_start");
+    (rem, _) = take_spaces(rem).expect("Missing space after dest_start");
 
-    read_result = u64::<&str, Error<&str>>(remainder).unwrap();
-    let length = read_result.1;
+    (rem, result.1) = take_u64(rem).expect("Missing src_start");
+    (rem, _) = take_spaces(rem).expect("Missing space after src_start");
 
-    (dest_start, src_start, length)
+    (_, result.2) = take_u64(rem).expect("Missing length");
+
+    result
 }
 
 #[cfg(test)]

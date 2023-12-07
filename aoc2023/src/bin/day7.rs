@@ -1,5 +1,6 @@
-use aoc_helpers::parsing::*;
 use aoc_helpers::runner::*;
+use nom::character::complete::*;
+use nom::IResult;
 
 fn main() {
     let solution = Solution {};
@@ -25,6 +26,21 @@ impl AocSolution for Solution {
     }
 }
 
+fn parse_hand(s: &str) -> ([usize; 13], u32) {
+    let mut hand = [0usize; 13];
+    let mut bid = 0;
+
+    (hand, bid)
+}
+
+fn take_space(s: &str) -> IResult<&str, &str> {
+    space1(s)
+}
+
+fn take_card(s: &str) -> IResult<&str, char> {
+    one_of("AKQJT98765432")(s)
+}
+
 #[cfg(test)]
 mod day1_tests {
     use super::*;
@@ -32,7 +48,16 @@ mod day1_tests {
     #[test]
     fn samples_part1() {
         let solution = Solution {};
-        assert_eq!(solution.part_one(""), "");
+        assert_eq!(
+            solution.part_one(
+                "32T3K 765
+T55J5 684
+KK677 28
+KTJJT 220
+QQQJA 483"
+            ),
+            ""
+        );
     }
 
     #[test]

@@ -1,7 +1,5 @@
+use aoc_helpers::parsing::*;
 use aoc_helpers::runner::*;
-use nom::bytes::complete::*;
-use nom::character::complete::*;
-use nom::IResult;
 
 fn main() {
     let solution = Solution {};
@@ -26,7 +24,7 @@ impl AocSolution for Solution {
         let mut rem: &str;
         let mut taken: &str;
 
-        (rem, _) = tag_time(time_line).expect("Missing Times label");
+        (rem, _) = take_tag(time_line, "Time:").expect("Missing Times label");
 
         let mut times: Vec<u64> = Vec::new();
         while rem != "" {
@@ -35,7 +33,7 @@ impl AocSolution for Solution {
             times.push(taken.parse::<u64>().expect("Malformed time"));
         }
 
-        (rem, _) = tag_distance(dist_line).expect("Missing Times label");
+        (rem, _) = take_tag(dist_line, "Distance:").expect("Missing Times label");
 
         let mut distances: Vec<u64> = Vec::new();
         while rem != "" {
@@ -60,7 +58,7 @@ impl AocSolution for Solution {
         let mut rem: &str;
         let mut taken: &str;
 
-        (rem, _) = tag_time(time_line).expect("Missing Times label");
+        (rem, _) = take_tag(time_line, "Time:").expect("Missing Times label");
 
         let mut time_segments: Vec<&str> = Vec::new();
         while rem != "" {
@@ -73,7 +71,7 @@ impl AocSolution for Solution {
             .parse::<u64>()
             .expect("Malformed time");
 
-        (rem, _) = tag_distance(dist_line).expect("Missing Times label");
+        (rem, _) = take_tag(dist_line, "Distance:").expect("Missing Times label");
 
         let mut distance_segments: Vec<&str> = Vec::new();
         while rem != "" {
@@ -90,22 +88,6 @@ impl AocSolution for Solution {
 
         result.to_string()
     }
-}
-
-fn tag_time(s: &str) -> IResult<&str, &str> {
-    tag("Time:")(s)
-}
-
-fn tag_distance(s: &str) -> IResult<&str, &str> {
-    tag("Distance:")(s)
-}
-
-fn take_spaces(s: &str) -> IResult<&str, &str> {
-    space1(s)
-}
-
-fn take_number(s: &str) -> IResult<&str, &str> {
-    digit1(s)
 }
 
 fn calc_combos(time: f64, distance: f64) -> f64 {
