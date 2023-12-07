@@ -136,3 +136,7 @@ pub fn take_spaces(s: &str) -> IResult<&str, &str> {
 pub fn take_n(s: &str, n: usize) -> IResult<&str, &str> {
     take(n)(s)
 }
+
+pub fn take_card_char(s: &str) -> IResult<&str, char> {
+    one_of("AKQJT98765432")(s)
+}
