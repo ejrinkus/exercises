@@ -89,6 +89,10 @@ pub fn take_number(s: &str) -> IResult<&str, &str> {
     digit1(s)
 }
 
+pub fn take_char(s: &str) -> IResult<&str, char> {
+    anychar(s)
+}
+
 pub fn take_u8(s: &str) -> IResult<&str, u8> {
     u8(s)
 }
