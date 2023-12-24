@@ -1,6 +1,5 @@
-use use aoc_helpers::parsing::*;
+use aoc_helpers::parsing::*;
 use aoc_helpers::runner::*;
-::*;
 
 fn main() {
     let solution = Solution {};

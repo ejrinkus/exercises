@@ -2,6 +2,7 @@ use nom::bytes::complete::*;
 use nom::character::complete::*;
 use nom::IResult;
 use std::collections::HashMap;
+use std::str::Lines;
 
 lazy_static! {
     static ref DIGITS: HashMap<&'static str, u8> = {
@@ -38,6 +39,18 @@ pub fn parse_matrix(s: &str) -> Vec<Vec<char>> {
     let mut matrix: Vec<Vec<char>> = Vec::with_capacity(s.lines().count());
     for l in s.lines() {
         let row: Vec<char> = l.chars().collect();
+        matrix.push(row);
+    }
+    matrix
+}
+
+pub fn matrix_from_lines(l: &mut Lines<'_>) -> Vec<Vec<char>> {
+    let mut matrix: Vec<Vec<char>> = Vec::new();
+    while let Some(line) = l.next() {
+        if line == "" {
+            break;
+        }
+        let row: Vec<char> = line.chars().collect();
         matrix.push(row);
     }
     matrix
