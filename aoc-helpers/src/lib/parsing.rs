@@ -56,6 +56,15 @@ pub fn matrix_from_lines(l: &mut Lines<'_>) -> Vec<Vec<char>> {
     matrix
 }
 
+pub fn print_matrix(matrix: &Vec<Vec<char>>) {
+    for row in matrix {
+        for val in row {
+            print!("{}", val);
+        }
+        println!("");
+    }
+}
+
 pub fn get_next_digit(s: &str, inc_text: bool, consume: bool) -> (&str, Option<u8>) {
     let mut remainder = s;
     while remainder != "" {
@@ -156,4 +165,8 @@ pub fn take_n(s: &str, n: usize) -> IResult<&str, &str> {
 
 pub fn take_card_char(s: &str) -> IResult<&str, char> {
     one_of("AKQJT98765432")(s)
+}
+
+pub fn take_until_pattern<'a>(s: &'a str, p: &'a str) -> IResult<&'a str, &'a str> {
+    take_until(p)(s)
 }

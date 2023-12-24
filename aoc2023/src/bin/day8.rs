@@ -132,7 +132,7 @@ fn parse_nodes(mut iter: Lines<'_>) -> HashMap<String, (String, String)> {
         (rem, _) = take_tag(rem, " = (").expect("Couldn't trim the ' = (' tag");
         (rem, dest1) = take_n(rem, 3).expect("Couldn't match on dest1");
         (rem, _) = take_tag(rem, ", ").expect("Couldn't trim the ', ' tag");
-        (rem, dest2) = take_n(rem, 3).expect("Couldn't match on dest2");
+        (_, dest2) = take_n(rem, 3).expect("Couldn't match on dest2");
         node_map.insert(start.to_string(), (dest1.to_string(), dest2.to_string()));
     }
     node_map

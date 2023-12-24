@@ -536,15 +536,6 @@ impl AocSolution for Solution {
     }
 }
 
-fn print_matrix(matrix: &Vec<Vec<char>>) {
-    for row in matrix {
-        for val in row {
-            print!("{}", val);
-        }
-        println!("");
-    }
-}
-
 #[cfg(test)]
 mod day1_tests {
     use super::*;
