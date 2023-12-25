@@ -36,11 +36,21 @@ lazy_static! {
 }
 
 pub type Matrix = Vec<Vec<char>>;
+pub type I32Matrix = Vec<Vec<i32>>;
 
 pub fn parse_matrix(s: &str) -> Matrix {
     let mut matrix: Matrix = Vec::with_capacity(s.lines().count());
     for l in s.lines() {
         let row: Vec<char> = l.chars().collect();
+        matrix.push(row);
+    }
+    matrix
+}
+
+pub fn parse_num_matrix(s: &str) -> I32Matrix {
+    let mut matrix: I32Matrix = Vec::with_capacity(s.lines().count());
+    for l in s.lines() {
+        let row: Vec<i32> = l.chars().map(|c| (c as u8 - '0' as u8) as i32).collect();
         matrix.push(row);
     }
     matrix
