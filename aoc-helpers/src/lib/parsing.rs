@@ -35,8 +35,10 @@ lazy_static! {
     };
 }
 
-pub fn parse_matrix(s: &str) -> Vec<Vec<char>> {
-    let mut matrix: Vec<Vec<char>> = Vec::with_capacity(s.lines().count());
+pub type Matrix = Vec<Vec<char>>;
+
+pub fn parse_matrix(s: &str) -> Matrix {
+    let mut matrix: Matrix = Vec::with_capacity(s.lines().count());
     for l in s.lines() {
         let row: Vec<char> = l.chars().collect();
         matrix.push(row);
@@ -44,8 +46,8 @@ pub fn parse_matrix(s: &str) -> Vec<Vec<char>> {
     matrix
 }
 
-pub fn matrix_from_lines(l: &mut Lines<'_>) -> Vec<Vec<char>> {
-    let mut matrix: Vec<Vec<char>> = Vec::new();
+pub fn matrix_from_lines(l: &mut Lines<'_>) -> Matrix {
+    let mut matrix: Matrix = Vec::new();
     while let Some(line) = l.next() {
         if line == "" {
             break;
@@ -56,7 +58,7 @@ pub fn matrix_from_lines(l: &mut Lines<'_>) -> Vec<Vec<char>> {
     matrix
 }
 
-pub fn print_matrix(matrix: &Vec<Vec<char>>) {
+pub fn print_matrix(matrix: &Matrix) {
     for row in matrix {
         for val in row {
             print!("{}", val);
