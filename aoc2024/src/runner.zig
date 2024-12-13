@@ -29,7 +29,7 @@ const day24 = @import("days/day24.zig");
 const day25 = @import("days/day25.zig");
 const daynil = @import("days/daynil.zig");
 
-const session = @import("../data/session.zig");
+const session = @import("utils/session.zig");
 
 const RunError = error{
     FetchError,

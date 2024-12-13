@@ -1,9 +1,9 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const ArrayList = std.ArrayList;
 
-pub fn parseNums(allocator: Allocator, comptime T: type, line: []const u8, delim: u8) ![]const T {
-    var list = std.ArrayList(T).init(allocator);
-    defer list.deinit();
+pub fn parseNums(allocator: Allocator, comptime T: type, line: []const u8, delim: u8) !ArrayList(T) {
+    var list = ArrayList(T).init(allocator);
 
     var start: ?usize = null;
     for (line, 0..) |value, i| {
@@ -31,5 +31,5 @@ pub fn parseNums(allocator: Allocator, comptime T: type, line: []const u8, delim
         try list.append(num);
     }
 
-    return list.toOwnedSlice();
+    return list;
 }

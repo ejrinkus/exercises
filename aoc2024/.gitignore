@@ -1,3 +1,4 @@
 data/*
+session.zig
 .zig-cache
 zig-out

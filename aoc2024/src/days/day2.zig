@@ -7,9 +7,9 @@ pub fn partOne(allocator: Allocator, input: ArrayList([]u8)) ![]const u8 {
     var sum: u32 = 0;
     for (input.items) |line| {
         const report = try parsing.parseNums(allocator, u32, line, ' ');
-        defer allocator.free(report);
+        defer report.deinit();
 
-        if (evaluate(report)) sum += 1;
+        if (evaluate(report.items)) sum += 1;
     }
 
     return std.fmt.allocPrint(allocator, "{d}", .{sum});
@@ -19,10 +19,10 @@ pub fn partTwo(allocator: Allocator, input: ArrayList([]u8)) ![]const u8 {
     var sum: u32 = 0;
     for (input.items) |line| {
         const report = try parsing.parseNums(allocator, u32, line, ' ');
-        defer allocator.free(report);
+        defer report.deinit();
 
-        for (0..report.len) |i| {
-            if (evaluateWithSkip(report, i)) {
+        for (0..report.items.len) |i| {
+            if (evaluateWithSkip(report.items, i)) {
                 sum += 1;
                 break;
             }
@@ -32,7 +32,7 @@ pub fn partTwo(allocator: Allocator, input: ArrayList([]u8)) ![]const u8 {
     return std.fmt.allocPrint(allocator, "{d}", .{sum});
 }
 
-pub fn evaluate(report: []const u32) bool {
+pub fn evaluate(report: []u32) bool {
     var prev = report[0];
     var asc: bool = false;
     var desc: bool = false;
@@ -62,7 +62,7 @@ pub fn evaluate(report: []const u32) bool {
     return safe;
 }
 
-pub fn evaluateWithSkip(report: []const u32, skip: usize) bool {
+pub fn evaluateWithSkip(report: []u32, skip: usize) bool {
     var prev = report[0];
     var start: usize = 1;
     if (skip == 0) {
