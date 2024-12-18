@@ -77,10 +77,34 @@ pub fn Grid(comptime T: type) type {
             return self.inner[coord.row - 1][coord.col];
         }
 
+        pub fn getAboveRight(self: Self, coord: Coord) !T {
+            if (coord.row < 1 or coord.row > self.height) return GridError.OutOfBounds;
+            if (coord.col >= self.width - 1) return GridError.OutOfBounds;
+            return self.inner[coord.row - 1][coord.col + 1];
+        }
+
+        pub fn getRight(self: Self, coord: Coord) !T {
+            if (coord.row < 0 or coord.row >= self.height) return GridError.OutOfBounds;
+            if (coord.col >= self.width - 1) return GridError.OutOfBounds;
+            return self.inner[coord.row][coord.col + 1];
+        }
+
+        pub fn getBelowRight(self: Self, coord: Coord) !T {
+            if (coord.row >= self.height - 1) return GridError.OutOfBounds;
+            if (coord.col >= self.width - 1) return GridError.OutOfBounds;
+            return self.inner[coord.row + 1][coord.col + 1];
+        }
+
         pub fn getBelow(self: Self, coord: Coord) !T {
             if (coord.row >= self.height - 1) return GridError.OutOfBounds;
             if (coord.col < 0 or coord.col >= self.width) return GridError.OutOfBounds;
             return self.inner[coord.row + 1][coord.col];
+        }
+
+        pub fn getBelowLeft(self: Self, coord: Coord) !T {
+            if (coord.row >= self.height - 1) return GridError.OutOfBounds;
+            if (coord.col < 1 or coord.col > self.width) return GridError.OutOfBounds;
+            return self.inner[coord.row + 1][coord.col - 1];
         }
 
         pub fn getLeft(self: Self, coord: Coord) !T {
@@ -89,10 +113,10 @@ pub fn Grid(comptime T: type) type {
             return self.inner[coord.row][coord.col - 1];
         }
 
-        pub fn getRight(self: Self, coord: Coord) !T {
-            if (coord.row < 0 or coord.row >= self.height) return GridError.OutOfBounds;
-            if (coord.col >= self.width - 1) return GridError.OutOfBounds;
-            return self.inner[coord.row][coord.col + 1];
+        pub fn getAboveLeft(self: Self, coord: Coord) !T {
+            if (coord.row < 1 or coord.row > self.height) return GridError.OutOfBounds;
+            if (coord.col < 1 or coord.col > self.width) return GridError.OutOfBounds;
+            return self.inner[coord.row - 1][coord.col - 1];
         }
 
         pub fn update(self: Self, coord: Coord, val: T) !void {
@@ -104,8 +128,8 @@ pub fn Grid(comptime T: type) type {
 }
 
 pub const Coord = struct {
-    row: usize,
-    col: usize,
+    row: usize = 0,
+    col: usize = 0,
 
     pub fn toKey(self: Coord) u128 {
         var key: u128 = self.row;
