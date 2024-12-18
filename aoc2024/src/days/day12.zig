@@ -5,8 +5,8 @@ const ArrayList = std.ArrayList;
 const AutoArrayHashMap = std.AutoArrayHashMap;
 
 const Region = struct {
-    id: u16,
-    fill_id: u16,
+    id: u32,
+    crop: u32,
     area: u32 = 0,
     perimeter: u32 = 0,
     edges: u32 = 0,
@@ -15,7 +15,7 @@ const Region = struct {
 pub fn partOne(allocator: Allocator, input: ArrayList([]u8)) ![]const u8 {
     var sum: u32 = 0;
 
-    var g = try grid.Grid(u16).init(allocator, input.items.len, input.items[0].len);
+    var g = try grid.Grid(u32).init(allocator, input.items.len, input.items[0].len);
     defer g.deinit();
 
     for (0..g.height) |row| {
@@ -29,11 +29,11 @@ pub fn partOne(allocator: Allocator, input: ArrayList([]u8)) ![]const u8 {
         .col = 0,
     };
 
-    var regions = AutoArrayHashMap(u16, Region).init(allocator);
+    var regions = AutoArrayHashMap(u32, Region).init(allocator);
     defer regions.deinit();
 
     // Input is ASCII, so start our IDs just above those values to avoid collision.
-    var next_fill_id: u16 = 256;
+    var next_id: u32 = 256;
     for (0..g.height) |row| {
         cursor.row = row;
         for (0..g.width) |col| {
@@ -45,14 +45,14 @@ pub fn partOne(allocator: Allocator, input: ArrayList([]u8)) ![]const u8 {
             }
 
             var region = Region{
-                .id = id,
-                .fill_id = next_fill_id,
+                .id = next_id,
+                .crop = id,
             };
 
-            next_fill_id += 1;
+            next_id += 1;
 
             try fillRegion(&g, &region, cursor);
-            try regions.put(region.fill_id, region);
+            try regions.put(region.id, region);
             sum += region.perimeter * region.area;
         }
     }
@@ -64,7 +64,7 @@ pub fn partOne(allocator: Allocator, input: ArrayList([]u8)) ![]const u8 {
 pub fn partTwo(allocator: Allocator, input: ArrayList([]u8)) ![]const u8 {
     var sum: u32 = 0;
 
-    var g = try grid.Grid(u16).init(allocator, input.items.len, input.items[0].len);
+    var g = try grid.Grid(u32).init(allocator, input.items.len, input.items[0].len);
     defer g.deinit();
 
     for (0..g.height) |row| {
@@ -78,10 +78,11 @@ pub fn partTwo(allocator: Allocator, input: ArrayList([]u8)) ![]const u8 {
         .col = 0,
     };
 
-    var regions = AutoArrayHashMap(u16, Region).init(allocator);
+    var regions = AutoArrayHashMap(u32, Region).init(allocator);
     defer regions.deinit();
 
-    var next_fill_id: u16 = 1;
+    // Input is ASCII, so start our IDs just above those values to avoid collision.
+    var next_id: u32 = 256;
     for (0..g.height) |row| {
         cursor.row = row;
         for (0..g.width) |col| {
@@ -93,81 +94,151 @@ pub fn partTwo(allocator: Allocator, input: ArrayList([]u8)) ![]const u8 {
             }
 
             var region = Region{
-                .id = id,
-                .fill_id = next_fill_id,
+                .id = next_id,
+                .crop = id,
             };
 
-            next_fill_id += 1;
+            next_id += 1;
 
             try fillRegion(&g, &region, cursor);
-            try regions.put(region.fill_id, region);
-            sum += region.perimeter * region.area;
+            try regions.put(region.id, region);
         }
+    }
+
+    try updateEdges(&g, &regions);
+    for (regions.values()) |region| {
+        sum += region.edges * region.area;
     }
 
     const solution = try std.fmt.allocPrint(allocator, "{d}", .{sum});
     return solution;
 }
 
-fn fillRegion(g: *grid.Grid(u16), region: *Region, loc: grid.Coord) !void {
+fn fillRegion(g: *grid.Grid(u32), region: *Region, loc: grid.Coord) !void {
     region.area += 1;
-    try g.update(loc, region.fill_id);
+    try g.update(loc, region.id);
 
     var next_dir = grid.Dir.Right;
     for (0..4) |_| {
         const next = g.getDir(loc, next_dir) catch 0;
-        if (next == region.id) {
+        if (next == region.crop) {
             try fillRegion(g, region, try loc.translateDir(next_dir));
-        } else if (next != region.fill_id) {
+        } else if (next != region.id) {
             region.perimeter += 1;
         }
         next_dir = grid.rotateDirClockwise(next_dir);
     }
 }
 
-fn traceRegion(g: *grid.Grid(u16), region: *Region, start: grid.Coord) !void {
-    // Trace the perimeter of a region.  Given how the grid gets traversed, we'll always start in
-    // an upper-left corner position (maybe not _the_ upper left, but it will be a space that
-    // minimally has fencing on the top and left).
-    //
-    // If we imagine walking the trace, we will walk it keeping the current edge on our left.  If
-    // there is ever no longer an edge in that direction, then we need to turn left.  Or, if we can
-    // no longer keep moving in the same direction we've been moving in, we need to turn right.
-    //
-    // In the latter case, we increment our edges count before checking to see if we can move after
-    // the turn.  This is repeated until we are able to move again (e.g. if we hit a dead end, we'll
-    // turn twice and increment the edges count twice to represent the 2 new edges that the current
-    // space introduced).
-    //
-    // We stop once we've returned to the location we started at.  Given the above, this means that
-    // edge_dir should be Left.  If it isn't and we're at the starting position, then we may need
-    // to rotate in-place one to three more times to ensure we count all the edges before we're
-    // done.
-    var loc = grid.Coord{
-        .row = start.row,
-        .col = start.col,
-    };
-    var edge_dir = grid.Dir.Up;
-    while (loc.row != start.row or loc.col != start.col or edge_dir != grid.Dir.Left) {
-        const left_turn = g.getDir(loc, edge_dir) catch 0;
-        if (left_turn == region.fill_id) {
-            // No more edge on our left, turn left.
-            region.edges += 1;
-            loc = try loc.translateDir(edge_dir);
-            edge_dir = grid.rotateDirAnticlockwise(edge_dir);
-            continue;
+fn updateEdges(g: *grid.Grid(u32), regions: *AutoArrayHashMap(u32, Region)) !void {
+    // Scan left-to-right across every row on the grid.  Every time the ID changes from one cell
+    // to the next, we've hit an edge (for both of those IDs).
+    var cursor = grid.Coord{};
+    while (cursor.row < g.height) : (cursor.row += 1) {
+        var curr_id = try g.get(cursor);
+
+        // Handle the outer left edges.
+        if (curr_id != (g.getAbove(cursor) catch 0)) {
+            var r = regions.getPtr(curr_id).?;
+            r.edges += 1;
         }
 
-        const forward_dir = grid.rotateDirClockwise(edge_dir);
-        const forward = g.getDir(loc, forward_dir) catch 0;
-        if (forward == region.fill_id) {
-            // Continue forward, no new edge.
-            loc = try loc.translateDir(forward_dir);
-            continue;
+        // Handle the inner edges.
+        while (cursor.col < g.width - 1) {
+            const next_id = try g.get(try cursor.translateDir(grid.Dir.Right));
+            if (next_id == curr_id) {
+                cursor.col += 1;
+                continue;
+            }
+
+            // curr_id has an edge on the right if next_id is different AND:
+            // - The ID above it is different (outer corner)
+            // - OR the IDs above and diagonally-up-right match (inner corner).
+            if (curr_id != (g.getAbove(cursor) catch 0)) {
+                var r = regions.getPtr(curr_id).?;
+                r.edges += 1;
+            } else if (curr_id == (g.getAboveRight(cursor) catch 0)) {
+                var r = regions.getPtr(curr_id).?;
+                r.edges += 1;
+            }
+
+            cursor.col += 1;
+
+            // next_id has an edge on the left if curr_id is different AND:
+            // - The ID above it is different (outer corner)
+            // - OR the IDs above and diagonally-up-left match (inner corner).
+            if (next_id != (g.getAbove(cursor) catch 0)) {
+                var r = regions.getPtr(next_id).?;
+                r.edges += 1;
+            } else if (next_id == (g.getAboveLeft(cursor) catch 0)) {
+                var r = regions.getPtr(next_id).?;
+                r.edges += 1;
+            }
+
+            curr_id = next_id;
         }
 
-        // Don't actually move yet, in case we need to immediately turn again.
-        edge_dir = forward_dir;
-        region.edges += 1;
+        // Handle the outer right edges.
+        if (curr_id != (g.getAbove(cursor) catch 0)) {
+            var r = regions.getPtr(curr_id).?;
+            r.edges += 1;
+        }
+
+        cursor.col = 0;
+    }
+
+    // Same as above, but now we're scanning columns to find the horizontal edges.
+    cursor.row = 0;
+    cursor.col = 0;
+    while (cursor.col < g.width) : (cursor.col += 1) {
+        var curr_id = try g.get(cursor);
+
+        // The first ID in a column has an edge on the top.
+        if (curr_id != (g.getLeft(cursor) catch 0)) {
+            var r = regions.getPtr(curr_id).?;
+            r.edges += 1;
+        }
+
+        while (cursor.row < g.height - 1) {
+            const next_id = try g.get(try cursor.translateDir(grid.Dir.Down));
+            if (next_id == curr_id) {
+                cursor.row += 1;
+                continue;
+            }
+
+            // curr_id has an edge below if next_id is different AND:
+            // - The ID to the left is different (outer corner)
+            // - OR the IDs to the left and diagonally-down-left match (inner corner).
+            if (curr_id != (g.getLeft(cursor) catch 0)) {
+                var r = regions.getPtr(curr_id).?;
+                r.edges += 1;
+            } else if (curr_id == (g.getBelowLeft(cursor) catch 0)) {
+                var r = regions.getPtr(curr_id).?;
+                r.edges += 1;
+            }
+
+            cursor.row += 1;
+
+            // next_id has an edge above if curr_id is different AND:
+            // - The ID to the left is different (outer corner)
+            // - OR the IDs to the left and diagonally-up-left match (inner corner).
+            if (next_id != (g.getLeft(cursor) catch 0)) {
+                var r = regions.getPtr(next_id).?;
+                r.edges += 1;
+            } else if (next_id == (g.getAboveLeft(cursor) catch 0)) {
+                var r = regions.getPtr(next_id).?;
+                r.edges += 1;
+            }
+
+            curr_id = next_id;
+        }
+
+        // The last ID in a column has an edge on the bottom.
+        if (curr_id != (g.getLeft(cursor) catch 0)) {
+            var r = regions.getPtr(curr_id).?;
+            r.edges += 1;
+        }
+
+        cursor.row = 0;
     }
 }
