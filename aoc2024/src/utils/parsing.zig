@@ -50,7 +50,7 @@ pub fn nextNum(comptime T: type, line: []const u8, idx: *usize) std.fmt.ParseInt
     var num_start: ?usize = null;
     var num_end: ?usize = null;
 
-    for (idx..line.len) |i| {
+    for (idx.*..line.len) |i| {
         if (charToDigit(line[i]) == null) {
             if (num_start == null) continue;
             num_end = i;
@@ -62,6 +62,6 @@ pub fn nextNum(comptime T: type, line: []const u8, idx: *usize) std.fmt.ParseInt
     if (num_start == null) return null;
     if (num_end == null) num_end = line.len;
 
-    idx.* = num_end;
+    idx.* = num_end.?;
     return try std.fmt.parseInt(T, line[num_start.?..num_end.?], 10);
 }
