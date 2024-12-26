@@ -26,6 +26,15 @@ pub fn rotateDirAnticlockwise(dir: Dir) Dir {
     };
 }
 
+pub fn flipDir(dir: Dir) Dir {
+    return switch (dir) {
+        Dir.Up => Dir.Down,
+        Dir.Left => Dir.Right,
+        Dir.Down => Dir.Up,
+        Dir.Right => Dir.Left,
+    };
+}
+
 pub fn Grid(comptime T: type) type {
     return struct {
         allocator: Allocator,
@@ -123,6 +132,16 @@ pub fn Grid(comptime T: type) type {
             if (coord.row < 0 or coord.row >= self.height) return GridError.OutOfBounds;
             if (coord.col < 0 or coord.col >= self.width) return GridError.OutOfBounds;
             self.inner[coord.row][coord.col] = val;
+        }
+
+        pub fn print(self: Self) void {
+            for (0..self.height) |row| {
+                for (0..self.width) |col| {
+                    std.debug.print("{c}", .{self.inner[row][col]});
+                }
+                std.debug.print("\n", .{});
+            }
+            std.debug.print("\n", .{});
         }
     };
 }
